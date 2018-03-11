@@ -51,13 +51,13 @@ def callback(data):
     left_img = img[0:256, 0:672]
     right_img = img[0:256, 672:1344]
     
-    cv2.imshow('Left Eye', frame_processor(left_img, 'left'))
-    cv2.imshow('Right Eye', frame_processor(right_img, 'right'))
-    #frame_processor(left_img, 'left')
-    #frame_processor(right_img, 'right')
+    #cv2.imshow('Left Eye', frame_processor(left_img, 'left'))
+    #cv2.imshow('Right Eye', frame_processor(right_img, 'right'))
+    frame_processor(left_img, 'left')
+    frame_processor(right_img, 'right')
     controller()
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        pass
+    #if cv2.waitKey(1) & 0xFF == ord('q'):
+     #   pass
 
 
 rp.Subscriber("eyes", Image, callback)
