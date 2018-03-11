@@ -127,7 +127,9 @@ def hough_transform(image, side):
         return houghLines
     elif lastHoughLinesLeft is not None and lastHoughLinesRight is not None:
         #print "Couldn't find lines."
-        print "Using last instance of houghLines as reference."
+        #/////////////////////////////////////////////////////////
+        #print "Using last instance of houghLines as reference."
+        #\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
         stop = False
         linesExist = False
 	if side == 'left':
@@ -205,7 +207,7 @@ def pixel_points(y1, y2, line, image):
     x2 = int(x2)
     y1 = int(y1)
     y2 = int(y2)
-    print "(x1|x2|y1|y2): (" + str(x1) + "|" + str(x2) + "|" + str(y1) + "|" + str(y2) + ")"
+    #print "(x1|x2|y1|y2): (" + str(x1) + "|" + str(x2) + "|" + str(y1) + "|" + str(y2) + ")"
     return (x1, y1), (x2, y2)
 
 
