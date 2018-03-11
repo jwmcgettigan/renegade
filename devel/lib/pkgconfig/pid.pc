@@ -1,0 +1,8 @@
+prefix=/home/nvidia/racecar-ws/devel
+
+Name: pid
+Description: Description of pid
+Version: 0.0.23
+Cflags: -I/home/nvidia/racecar-ws/devel/include -I/home/nvidia/racecar-ws/src/pid/include
+Libs: -L/home/nvidia/racecar-ws/devel/lib 
+Requires: roscpp std_msgs message_runtime dynamic_reconfigure

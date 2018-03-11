@@ -1,0 +1,2 @@
+lab2:pid:racecar-simulator/racecar_control:racecar-simulator/racecar_description:racecar-simulator/racecar_gazebo:racecar/ackermann_cmd_mux:racecar/racecar:vesc/vesc:vesc/vesc_ackermann:vesc/vesc_driver:vesc/vesc_msgs
+-DCATKIN_DEVEL_PREFIX=/home/nvidia/racecar-ws/devel -DCMAKE_INSTALL_PREFIX=/home/nvidia/racecar-ws/install -G Unix Makefiles

@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: lab2
+Description: Description of lab2
+Version: 0.0.0
+Cflags: 
+Libs: -L/usr/local/lib 
+Requires: 

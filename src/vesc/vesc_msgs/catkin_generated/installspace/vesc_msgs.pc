@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: vesc_msgs
+Description: Description of vesc_msgs
+Version: 0.0.1
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib 
+Requires: std_msgs message_runtime

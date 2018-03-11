@@ -1,0 +1,8 @@
+prefix=/home/nvidia/racecar-ws/install
+
+Name: lab2
+Description: Description of lab2
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/nvidia/racecar-ws/install/lib 
+Requires: 
