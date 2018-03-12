@@ -1,0 +1,5 @@
+Thoroughly tested helper.py and eye3.py
+ -Implemented a difference in behavior and print statements for when no line has been seen yet.
+ -I need to implement some guidelines for git for our group.
+ -I need to implement the behavior that the car stops or backs-up when it hasn't seen a line for a period of time.
+ -I need to implement a robust 'command-center' that allows for better analysis of image processing at every stage. This includes setting up the ros web_video_server package.  

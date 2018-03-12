@@ -10,7 +10,7 @@ from ackermann_msgs.msg import AckermannDriveStamped, AckermannDrive
 
 VERBOSE=False
 DEBUG=True
-DISPLAY=True
+DISPLAY=False
 
 class Controller:
     kill_switch = 0
@@ -37,49 +37,59 @@ class Controller:
 
         left_eye.process()
         right_eye.process()
-        self.controller_(left_eye.get_slope(), right_eye.get_slope())
+	linesExist = left_eye.getLinesExist or right_eye.getLinesExist
+	firstLinesSeen = left_eye.getFirstLinesSeen() and right_eye.getFirstLinesSeen()
+        self.controller_(left_eye.getSlope(), right_eye.getSlope(), linesExist, firstLinesSeen)
         if DISPLAY:
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 pass
 
 
     def joy_callback(self, ros_data):
-        Controller.kill_switch = ros_data.buttons[5]
+        self.kill_switch = ros_data.buttons[5]
 
 
-    def controller_(self, left_slope, right_slope):
-        sum_of_slopes = left_slope + right_slope
+    def controller_(self, leftSlope, rightSlope, linesExist, firstLinesSeen):
+        sumOfSlopes = leftSlope + rightSlope
         #steering_control = con.turn_control(sum_of_slopes)
-        steering_control = (0.3/2.5)*sum_of_slopes
-        if steering_control > 0.3:
-            steering_control = 0.3
-        if steering_control < -0.3:
-            steering_control = -0.3
+        steeringControl = (0.3/2.5)*sumOfSlopes
+        if steeringControl > 0.3:
+            steeringControl = 0.3
+        if steeringControl < -0.3:
+            steeringControl = -0.3
         direction = ""
-        if steering_control > 0.02:
+        if steeringControl > 0.02:
             direction = "Left"
-        elif steering_control < -0.02:
+        elif steeringControl < -0.02:
             direction = "Right"
         else:
             direction = "Center"
-        if DEBUG:
-            print "=================="
-            print "(Left|Right): (" + str(right_slope) + "|" + str(left_slope) + ")"
-            print "Sum: " + str(sum_of_slopes)
-            print "(Control|Direction): (" + str(steering_control) + "|" + str(direction) + ")"
-        speed_limit = 0.6
-        speed_power = 1.13678
-        speed_control = speed_limit * (1 - abs(steering_control))**speed_power
+        if DEBUG and firstLinesSeen:
+            #print "=================="
+	    print "|Left    |Right   |Sum     |Control |Direction|"
+	    print "|%f|%f|%f|%f|%s     |" % (leftSlope, rightSlope, sumOfSlopes, steeringControl, direction) 
+            #print "(Left|Right): (%f|%f)" % (leftSlope, rightSlope)
+            #print "Sum: %f" % (sumOfSlopes)
+            #print "(Control|Direction): (%f|%s)" % (steeringControl, direction)
+        speedLimit = 0.6
+        speedPower = 1.13678
+        speedControl = speedLimit * (1 - abs(steeringControl))**speedPower
         #speed_control = 0.4
         drive_msg_stamped = AckermannDriveStamped()
         drive_msg = AckermannDrive()
-        if f.getLinesExist and Controller.kill_switch:
-            self.apply_control(drive_msg, speed_control, steering_control)
-        else:
-            self.stop(drive_msg)
-            #apply_control(1, 0)
+	self.logic(drive_msg, speedControl, steeringControl, linesExist)
         drive_msg_stamped.drive = drive_msg
         self.vesc.publish(drive_msg_stamped)
+
+
+    def logic(self, drive_msg, speed_control, steering_control, lines_exist):
+	if self.kill_switch:
+	    if lines_exist:
+		self.apply_control(drive_msg, speed_control, steering_control)
+	    else:
+		self.apply_control(drive_msg, 1, 0)
+	else:
+	    self.stop(drive_msg)
 
 
     def apply_control(self, msg, speed, steering_angle):
@@ -100,6 +110,7 @@ class Controller:
 
 class Eye:
     slope = 0.0
+    helper_functions = helper.Functions()
 
     def __init__(self, image, eye):
         self.image = image
@@ -112,24 +123,34 @@ class Eye:
             self.frame_processor(self.image)
 
     def frame_processor(self, image):
-        f = helper.Functions()
+        f = self.helper_functions
         color = f.hsv_color_selection(image)
         gray = f.gray_scale(color)
         smooth = f.gaussian_smoothing(gray)
         edges = f.canny_detector(smooth)
         hough = f.hough_transform(edges)
-        Eye.slope = f.getSlope()
+        self.slope = f.getSlope()
+	self.linesExist = f.getLinesExist()
+	self.firstLinesSeen = f.getFirstLinesSeen()
         result = f.draw_lane_line(image, f.lane_line(image, hough))
         return result
 
 
-    def get_slope(self):
-        return Eye.slope
+    def getSlope(self):
+        return self.slope
+
+
+    def getLinesExist(self):
+	return self.linesExist
+
+
+    def getFirstLinesSeen(self):
+	return self.firstLinesSeen
 
 
 if __name__ == '__main__':
-    controller = Controller()
     rp.init_node("controller", anonymous=True)
+    controller = Controller()
     try:
         rp.spin()
     except KeyboardInterrupt:

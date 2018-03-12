@@ -8,6 +8,7 @@ VERBOSE = False
 
 class Functions:
     slope = x1 = 0.0
+    firstLinesSeen = False
     linesExist = True
     lastHoughLines = None
 
@@ -19,7 +20,7 @@ class Functions:
         pass
 
 
-    def hsv_color_selection(image):
+    def hsv_color_selection(self, image):
         """Apply blue color mask"""
         converted = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
         lower = np.uint8([0, 80, 0])
@@ -28,26 +29,26 @@ class Functions:
         return cv2.bitwise_and(image, image, mask=mask)
 
 
-    def gray_scale(img):
+    def gray_scale(self, image):
         """Applies the grayscale transform"""
-        return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        return cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
 
-    def gaussian_smoothing(img):
+    def gaussian_smoothing(self, image):
         """Applies a gaussian noise kernel"""
         kernel_size = 3
-        return cv2.GaussianBlur(img, (kernel_size, kernel_size), 0)
+        return cv2.GaussianBlur(image, (kernel_size, kernel_size), 0)
 
 
-    def canny_detector(img):
+    def canny_detector(self, image):
         """Applies the canny transform"""
         low_threshold = 100
         high_threshold = 200
-        return cv2.Canny(img, low_threshold, high_threshold)
+        return cv2.Canny(image, low_threshold, high_threshold)
 
 
     #=============================================================
-    def hough_transform(image):
+    def hough_transform(self, image):
         """
         Determine and cut the region of interest in the input image.
             Parameters:
@@ -61,17 +62,20 @@ class Functions:
 
         houghLines = cv2.HoughLinesP(image, rho = rho, theta = theta, threshold = threshold, minLineLength = minLineLength, maxLineGap = maxLineGap)
         if houghLines is not None:
-            Functions.linesExist = True
-            Functions.lastHoughLines = houghLines
+	    if self.firstLinesSeen == False:
+		print "\nA line has been detected.\n"
+		self.firstLinesSeen = True
+            self.linesExist = True
+            self.lastHoughLines = houghLines
             return houghLines
-        elif Functions.lastHoughLines is not None:#Functions.lastHoughLinesLeft is not None or Functions.lastHoughLinesRight is not None:
-            Functions.linesExist = False
-            return Functions.lastHoughLines
+        elif self.lastHoughLines is not None:#Functions.lastHoughLinesLeft is not None or Functions.lastHoughLinesRight is not None:
+            self.linesExist = False
+            return self.lastHoughLines
         else:
-            print "Something is SERIOUSLY wrong."
-            Functions.linesExist = False
+            self.linesExist = False
+	    print "\rA line is yet to be detected.",
     #=============================================================
-    def average_slope_intercept(lines):
+    def average_slope_intercept(self, lines):
         """
         Find the slope and intercept of the lanes of each image.
             Parameters:
@@ -96,7 +100,7 @@ class Functions:
         lane = np.dot(weights, lines_) / np.sum(weights) if len(weights) > 0 else None
         return lane
     #=============================================================
-    def pixel_points(y1, y2, line, image):
+    def pixel_points(self, y1, y2, line, image):
         """
         Converts the slope and intercept of each line into pixel points.
             Parameters:
@@ -106,35 +110,38 @@ class Functions:
         """
         slope, intercept = line
         if slope == 0.0:
-            slope += 0.0000001
+            slope += 0.000001
 
         x1 = image.shape[1]/2
         x2 = (y2 - intercept) / slope
-        Functions.x1 = int((y1 - intercept) / slope)
-        Functions.slope = (x2 - x1)/(y2 - y1)
+        self.x1 = int((y1 - intercept) / slope)
+        self.slope = (x2 - x1)/(y2 - y1)
         x1 = int(x1)
         x2 = int(x2)
         y1 = int(y1)
         y2 = int(y2)
-        if DEBUG:
+        if DEBUG and self.firstLinesSeen:
             print "GUIDE(x1|x2|y1|y2): (" + str(x1) + "|" + str(x2) + "|" + str(y1) + "|" + str(y2) + ")"
-            print "FOLLOW(x1|x2|y1|y2): (" + str(Functions.x1) + "|" + str(x2) + "|" + str(y1) + "|" + str(y2) + ")"
+            print "FOLLOW(x1|x2|y1|y2): (" + str(self.x1) + "|" + str(x2) + "|" + str(y1) + "|" + str(y2) + ")"
         return (x1, y1), (x2, y2)
     #=============================================================
-    def lane_line(image, lines):
+    def lane_line(self, image, lines):
         """
         Create full length lines from pixel points.
             Parameters:
                 image: The input test image.
                 lines: The output lines from Hough Transform.
         """
-        lane = average_slope_intercept(lines)
-        y1 = image.shape[0]
-        y2 = 0
-        line = pixel_points(y1, y2, lane, image)
-        return line
+	try:
+            lane = self.average_slope_intercept(lines)
+            y1 = image.shape[0]
+            y2 = 0
+            line = self.pixel_points(y1, y2, lane, image)
+            return line
+	except:
+	    pass
     #=============================================================
-    def draw_lane_line(image, lines, thickness=12):
+    def draw_lane_line(self, image, lines, thickness=12):
         """
         Draw lines onto the input image.
             Parameters:
@@ -145,24 +152,30 @@ class Functions:
         cv2.line(img, (x1, y1), (x2, y2), [0, 0, 255], thickness)
         """
         line_image = np.zeros_like(image)
-        Functions.isLine = True
         #cv2.line(line_image, (Functions.x1, lines[0][1]), lines[1], [0, 255, 0], thickness)
-        cv2.line(line_image, lines[0], lines[1], [0, 0, 255], thickness)
+        try:
+	    self.isLine = True
+	    cv2.line(line_image, lines[0], lines[1], [0, 0, 255], thickness)
+	except:
+	    pass
         return cv2.addWeighted(image, 1.0, line_image, 1.0, 0.0)
     #=============================================================
-    def weighted_img(img, initial_img, a=0.8, b=1., y=0.):
+    def weighted_img(self, img, initial_img, a=0.8, b=1., y=0.):
         """ 'img' is the output of the hough_lines(), An image with lines drawn on it.
         Should be a blank image (all black) with lines drawn on it.
         'initial_img' should be the image before any processing."""
         return cv2.addWeighted(initial_img, a, img, b, y)
 
 
-    def getSlope():
-        return Functions.slope
+    def getSlope(self):
+        return self.slope
 
 
-    def getLinesExist():
-        return Functions.linesExist
+    def getLinesExist(self):
+        return self.linesExist
+
+    def getFirstLinesSeen(self):
+	return self.firstLinesSeen
 
 #=================================================================
 #/////////////////////////////////////////////////////////////////

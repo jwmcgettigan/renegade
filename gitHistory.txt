@@ -1,0 +1,31 @@
+ 1173  xclip -sel clip < ~/.ssh/gitLabPrivate.pub
+ 1180  mv gitLabPrivate.pub .ssh/gitLab.pub
+ 1182  cat gitLabPrivate
+ 1184  mv gitLabPrivate .ssh/
+ 1188  cat gitLab.pub
+ 1193  git init
+ 1194  git remote add origin git@gitlab.com:jwmcgettigan/renegade.git
+ 1195  git push -u origin master
+ 1196  git add .
+ 1197  git commit -m "Initial commit"
+ 1198  git push -u origin master
+ 1199  git remote add origin git@gitlab.com:jwmcgettigan/renegade.git
+ 1200  git config --global --list
+ 1201  git
+ 1202  git log
+ 1207  mv gitLabPrivate ~
+ 1749  git add --all
+ 1750  git status
+ 1751  git commit -m "Started Lidar Subscriber 'probe.py'"
+ 1752  git push -u origin master
+ 1753  git pull origin master
+ 1754  git push -u origin master
+ 1783  git add --all
+ 1784  git commit -m "eyes.py successfully converted into class structure in eyes3.py"
+ 1785  git push -u origin master
+ 1998  history | grep git > gitHistory.txt
+ 2000  cat gitHistory.txt 
+ 2001  git pull origin master
+ 2005  git stash
+ 2006  git pull origin master
+ 2007  history | grep git > gitHistory.txt
