@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import rospy as rp
-import functions as f
+#import functions as f
+import helper
 import controller as con
 import cv2
 from sensor_msgs.msg import Image, Joy
@@ -13,7 +14,7 @@ DISPLAY=True
 
 class Controller:
     kill_switch = 0
-    
+
     def __init__(self):
         '''Initialize ros publisher, ros subscriber'''
         #topic where we publish
@@ -106,16 +107,17 @@ class Eye:
 
     def process(self):
         if DISPLAY:
-            cv2.imshow(self.eye + ' Eye', self.frame_processor(self.image, self.eye))
+            cv2.imshow(self.eye + ' Eye', self.frame_processor(self.image))
         else:
-            self.frame_processor(self.image, self.eye)
+            self.frame_processor(self.image)
 
-    def frame_processor(self, image, side):
+    def frame_processor(self, image):
+        f = helper.Functions()
         color = f.hsv_color_selection(image)
         gray = f.gray_scale(color)
         smooth = f.gaussian_smoothing(gray)
         edges = f.canny_detector(smooth)
-        hough = f.hough_transform(edges, side)
+        hough = f.hough_transform(edges)
         Eye.slope = f.getSlope()
         result = f.draw_lane_line(image, f.lane_line(image, hough))
         return result

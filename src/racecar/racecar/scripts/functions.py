@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
@@ -113,13 +114,13 @@ def hough_transform(image, side):
     threshold = 35#5     #Only lines that are greater than threshold will be returned.
     minLineLength = 30#3   #Line segments shorter than that are rejected.
     maxLineGap = 300#15   #Maximum allowed gap between points on the same line to link them
-    
+
     houghLines = cv2.HoughLinesP(image, rho = rho, theta = theta, threshold = threshold, minLineLength = minLineLength, maxLineGap = maxLineGap)
     #print "houghLines: " + str(houghLines)
     global linesExist, lastHoughLinesLeft, lastHoughLinesRight, stop
     if houghLines is not None:
         stop = False
-        linesExist = True 
+        linesExist = True
         if side == 'left':
 	    lastHoughLinesLeft = houghLines
         if side == 'right':
