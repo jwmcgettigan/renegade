@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-import numpy as np
-import cv2
-import matplotlib.pyplot as plt
+import cv2, numpy as np
 
 DEBUG = False
 VERBOSE = False

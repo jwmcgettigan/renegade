@@ -1,7 +1,0 @@
-<launch>
-
-  <node pkg="scripts" name="crying_eyes" type="crying_eyes.py"/>
-  <node pkg="scripts" name="left_eye" type="listening_left_eye.py"/>
-  <node pkg="scripts" name="right_eye" type="listening_right_eye.py"/>
-
-</launch>

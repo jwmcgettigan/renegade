@@ -15,65 +15,80 @@ rightSlope = 0.0
 
 def frame_processor(image, side):
     hsv = f.hsv_color_selection(image)
-    hsl = f.hsl_color_selection(image)
+    #hsl = f.hsl_color_selection(image)
     color_select = hsv
     gray = f.gray_scale(color_select)
     smooth = f.gaussian_smoothing(gray)
     edges = f.canny_detector(smooth)
     # region = f.region_of_interest(edges)
-    hough = f.hough_transform(edges)
+    hough = f.hough_transform(edges, side)
     
     if side=='left':
+        #print "---left---"
         global leftSlope
         leftSlope = f.getSlope()
 
     if side=='right':
+        #print "---right---"
         global rightSlope
         rightSlope = f.getSlope()
     
     result = f.draw_lane_line(image, f.lane_line(image, hough))
-    color_result = f.draw_lane_line(color_select, f.lane_line(color_select, hough))
-    hough_lines = f.hough_lines(edges)
-    # weighted_hough = cv2.addWeighted(image, 1.0, f.hough_lines(edges), 1.0, 0.0)
-    return color_result
-
+    #color_result = f.draw_lane_line(color_select, f.lane_line(color_select, hough))
+    #hough_lines = f.hough_lines(edges, side)
+    #weighted_hough = cv2.addWeighted(image, 1.0, f.hough_lines(edges), 1.0, 0.0)
+    return result
 
 vesc = rp.Publisher("/vesc/high_level/ackermann_cmd_mux/input/nav_0", \
                       AckermannDriveStamped, queue_size=1)
-#rp.Subscriber("eyes", Image, callback)
-#last_error = None
-#drive_thread = Thread(target=controller)
-#drive_thread.start()
 
 def callback(data):
     img = bridge.imgmsg_to_cv2(data, desired_encoding="passthrough")
-    left_img = img[188:376, 0:672]
-    right_img = img[188:376, 672:1344]
-
-    cv2.imshow('Left Eye', frame_processor(left_img, 'left'))
-    cv2.imshow('Right Eye', frame_processor(right_img, 'right'))
-    controller()
+    #left_img = img[0:188, 0:672]
+    #right_img = img[0:188, 672:1344]
+    #left_img = img[0:376, 0:672]
+    #right_img = img[0:376, 672:1344]
+    left_img = img[0:256, 0:672]
+    right_img = img[0:256, 672:1344]
+    
+    #cv2.imshow('Left Eye', frame_processor(left_img, 'left'))
+    #cv2.imshow('Right Eye', frame_processor(right_img, 'right'))
     frame_processor(left_img, 'left')
     frame_processor(right_img, 'right')
-    if cv2.waitKey(20) & 0xFF == ord('q'):
-        pass
+    controller()
+    #if cv2.waitKey(1) & 0xFF == ord('q'):
+     #   pass
 
 
 rp.Subscriber("eyes", Image, callback)
 
 
 def controller():
-    global leftSlope
-    global rightSlope
-    print "Left Slope: " + str(leftSlope) + ", Right Slope: " + str(rightSlope)
-    print "Sum of Slopes: " + str(leftSlope + rightSlope)
+    global leftSlope, rightSlope
+    print "=================="
+    print "(Left|Right): (" + str(rightSlope) + "|" + str(leftSlope) + ")"
+    print "Sum: " + str(leftSlope + rightSlope)
     control = con.turn_control(leftSlope + rightSlope)
-    print "Control: " + str(control)
-    
-    if f.getIsThereALine:
-    	apply_control(1, control)
+    if control > 0.3:
+        control = 0.3
+    if control < -0.3:
+        control = -0.3
+    direction = ""
+    if control > 0.02:
+	direction = "Left"
+    elif control < -0.02:
+	direction = "Right"
     else:
-        apply_control(1, 0)
+        direction = "Center"
+    print "(Control|Direction): (" + str(control) + "|" + str(direction) + ")"
+    speed_limit = 0.6
+    speed_control = speed_limit * (1 - abs(control))**1.13678
+    #speed_control = 0.4
+    if f.getLinesExist:
+    	apply_control(speed_control, control)
+    #else:
+        #stop()
+        #apply_control(1, 0)
 
 
 def apply_control(speed, steering_angle):
