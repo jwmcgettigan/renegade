@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 import rospy as rp
 import cv2
 from sensor_msgs.msg import Image
@@ -7,7 +7,7 @@ from cv_bridge import CvBridge, CvBridgeError
 
 def talker():
     eyes = rp.Publisher("eyes", Image, queue_size=10)
-    rp.init_node('image_converter', anonymous=True)
+    rp.init_node('crying_eyes', anonymous=True)
     rate = rp.Rate(30)
     bridge = CvBridge()
     cap = cv2.VideoCapture(1)

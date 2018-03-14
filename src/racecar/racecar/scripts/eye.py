@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 import helper
 import rospy as rp
 import cv2
@@ -6,8 +6,8 @@ from sensor_msgs.msg import Image, Joy
 from cv_bridge import CvBridge, CvBridgeError
 from ackermann_msgs.msg import AckermannDriveStamped, AckermannDrive
 
-VERBOSE=False
-DEBUG=True
+VERBOSE=False # not used
+DEBUG=False # not used
 DISPLAY=False
 
 """

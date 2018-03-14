@@ -1,7 +1,0 @@
-<launch>
-
-  <node pkg="racecar" name="crying_eyes" type="crying_eyes.py"/>
-  <node pkg="racecar" name="left_eye" type="left_eye.py"/>
-  <node pkg="racecar" name="right_eye" type="right_eye.py"/>
-
-</launch>

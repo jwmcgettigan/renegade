@@ -61,8 +61,8 @@ class Functions:
         houghLines = cv2.HoughLinesP(image, rho = rho, theta = theta, threshold = threshold, minLineLength = minLineLength, maxLineGap = maxLineGap)
         if houghLines is not None:
 	    if self.firstLinesSeen == False:
-            print "\nA line has been detected.\n"
-            self.firstLinesSeen = True
+                print "\nA line has been detected.\n"
+                self.firstLinesSeen = True
             self.linesExist = True
             self.lastHoughLines = houghLines
             return houghLines

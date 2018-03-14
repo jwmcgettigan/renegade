@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 import eye
 import cv2
 import rospy as rp
@@ -13,7 +13,8 @@ RECORD=False
 
 class Controller:
     kill_switch = 0
-    errorList = [0], HISTORYSIZE = 10
+    errorList = [0]
+    HISTORYSIZE = 10
 
     def __init__(self):
         '''Initialize ros publisher, ros subscriber'''
@@ -40,7 +41,7 @@ class Controller:
         linesExist = left_eye.getLinesExist or right_eye.getLinesExist
         firstLinesSeen = left_eye.getFirstLinesSeen() and right_eye.getFirstLinesSeen()
         self.controller_(left_eye.getSlope(), right_eye.getSlope(), linesExist, firstLinesSeen)
-        if DISPLAY and if cv2.waitKey(1) & 0xFF == ord('q'):
+        if DISPLAY and cv2.waitKey(1) & 0xFF == ord('q'):
             pass
 
 
@@ -61,9 +62,9 @@ class Controller:
         if DEBUG and firstLinesSeen:
             # print "=================="
             print "|Left    |Right   |Sum     |Control |Direction|"
-            print "|%f|%f|%f|%f|%s     |" % (leftSlope, rightSlope, sumOfSlopes, steeringAngle, direction)
+            print "|%f|%f|%f|%f|%s     |" % (leftSlope, rightSlope, error, steeringAngle, direction)
             # print "(Left|Right): (%f|%f)" % (leftSlope, rightSlope)
-            # print "Sum: %f" % (sumOfSlopes)
+            # print "Sum: %f" % (error)
             # print "(Control|Direction): (%f|%s)" % (steeringAngle, direction)
         speedLimit = 0.6
         speedPower = 1.13678

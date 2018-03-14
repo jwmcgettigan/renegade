@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 import rospy as rp
 from sensor_msgs.msg import LaserScan
 from sensor_msgs.msg import Image
