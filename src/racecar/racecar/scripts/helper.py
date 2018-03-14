@@ -61,8 +61,8 @@ class Functions:
         houghLines = cv2.HoughLinesP(image, rho = rho, theta = theta, threshold = threshold, minLineLength = minLineLength, maxLineGap = maxLineGap)
         if houghLines is not None:
 	    if self.firstLinesSeen == False:
-		print "\nA line has been detected.\n"
-		self.firstLinesSeen = True
+            print "\nA line has been detected.\n"
+            self.firstLinesSeen = True
             self.linesExist = True
             self.lastHoughLines = houghLines
             return houghLines
@@ -71,7 +71,7 @@ class Functions:
             return self.lastHoughLines
         else:
             self.linesExist = False
-	    print "\rA line is yet to be detected.",
+            print "\rA line is yet to be detected.",
     #=============================================================
     def average_slope_intercept(self, lines):
         """
@@ -130,14 +130,14 @@ class Functions:
                 image: The input test image.
                 lines: The output lines from Hough Transform.
         """
-	try:
+        try:
             lane = self.average_slope_intercept(lines)
             y1 = image.shape[0]
             y2 = 0
             line = self.pixel_points(y1, y2, lane, image)
             return line
-	except:
-	    pass
+        except:
+            pass
     #=============================================================
     def draw_lane_line(self, image, lines, thickness=12):
         """
@@ -152,11 +152,11 @@ class Functions:
         line_image = np.zeros_like(image)
         #cv2.line(line_image, (Functions.x1, lines[0][1]), lines[1], [0, 255, 0], thickness)
         try:
-	    self.isLine = True
-	    cv2.line(line_image, lines[0], lines[1], [0, 0, 255], thickness)
-	except:
-	    pass
-        return cv2.addWeighted(image, 1.0, line_image, 1.0, 0.0)
+            self.isLine = True
+            cv2.line(line_image, lines[0], lines[1], [0, 0, 255], thickness)
+            return cv2.addWeighted(image, 1.0, line_image, 1.0, 0.0)
+        except:
+            pass
     #=============================================================
     def weighted_img(self, img, initial_img, a=0.8, b=1., y=0.):
         """ 'img' is the output of the hough_lines(), An image with lines drawn on it.

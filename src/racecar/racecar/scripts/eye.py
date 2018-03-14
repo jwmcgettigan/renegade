@@ -10,8 +10,10 @@ VERBOSE=False
 DEBUG=True
 DISPLAY=False
 
+"""
 class Controller:
     kill_switch = 0
+    errorList = [0], HISTORYSIZE = 10
 
     def __init__(self):
         '''Initialize ros publisher, ros subscriber'''
@@ -48,24 +50,19 @@ class Controller:
 
 
     def controller_(self, leftSlope, rightSlope, linesExist, firstLinesSeen):
+        direction = ""
         error = leftSlope + rightSlope # sum of slopes
         # steeringControl = (0.3/2.5)*error
         steeringControl = self.pid_controller(error)
-        if steeringControl > 0.3:
-            steeringControl = 0.3
-        if steeringControl < -0.3:
-            steeringControl = -0.3
-        direction = ""
-        if steeringControl > 0.02:
-            direction = "Left"
-        elif steeringControl < -0.02:
-            direction = "Right"
-        else:
-            direction = "Center"
+        if steeringControl > 0.3: steeringControl = 0.3
+        if steeringControl < -0.3: steeringControl = -0.3
+        if steeringControl > 0.02: direction = "Left"
+        elif steeringControl < -0.02: direction = "Right"
+        else: direction = "Center"
         if DEBUG and firstLinesSeen:
             # print "=================="
-	    print "|Left    |Right   |Sum     |Control |Direction|"
-	    print "|%f|%f|%f|%f|%s     |" % (leftSlope, rightSlope, sumOfSlopes, steeringControl, direction)
+            print "|Left    |Right   |Sum     |Control |Direction|"
+            print "|%f|%f|%f|%f|%s     |" % (leftSlope, rightSlope, sumOfSlopes, steeringControl, direction)
             # print "(Left|Right): (%f|%f)" % (leftSlope, rightSlope)
             # print "Sum: %f" % (sumOfSlopes)
             # print "(Control|Direction): (%f|%s)" % (steeringControl, direction)
@@ -84,9 +81,9 @@ class Controller:
     def logic(self, drive_msg, speed_control, steering_control, lines_exist):
 	if self.kill_switch:
 	    if lines_exist:
-		self.apply_control(drive_msg, speed_control, steering_control)
+            self.apply_control(drive_msg, speed_control, steering_control)
 	    else:
-		self.apply_control(drive_msg, 1, 0)
+            self.apply_control(drive_msg, 1, 0)
 	else:
 	    self.stop(drive_msg)
 
@@ -107,7 +104,6 @@ class Controller:
         msg.steering_angle_velocity = 0
 
     def pid_controller(self, error):
-        self.errorList = [0], self.HISTORYSIZE = 10
         length = len(self.errorList)
 
         # if list is larger than the desired history size -1, remove item at index 0
@@ -128,7 +124,7 @@ class Controller:
         Ki = 0 # ignored
         Kd = 0 # ignored
         return (Kp * P) + (Ki * I) + (Kd * D)
-
+"""
 
 class Eye:
     slope = 0.0
@@ -137,12 +133,10 @@ class Eye:
     def __init__(self, image, eye):
         self.image = image
         self.eye = eye
-
-    def process(self):
         if DISPLAY:
             cv2.imshow(self.eye + ' Eye', self.frame_processor(self.image))
-        else:
-            self.frame_processor(self.image)
+        self.frame_processor(self.image)
+
 
     def frame_processor(self, image):
         f = self.helper_functions
@@ -151,11 +145,14 @@ class Eye:
         smooth = f.gaussian_smoothing(gray)
         edges = f.canny_detector(smooth)
         hough = f.hough_transform(edges)
+        self.linesExist = f.getLinesExist()
+        self.firstLinesSeen = f.getFirstLinesSeen()
+        if DISPLAY:
+            result = f.draw_lane_line(image, f.lane_line(image, hough))
+            return result
+        else:
+            f.lane_line(image, hough)
         self.slope = f.getSlope()
-	self.linesExist = f.getLinesExist()
-	self.firstLinesSeen = f.getFirstLinesSeen()
-        result = f.draw_lane_line(image, f.lane_line(image, hough))
-        return result
 
 
     def getSlope(self):
@@ -163,13 +160,13 @@ class Eye:
 
 
     def getLinesExist(self):
-	return self.linesExist
+        return self.linesExist
 
 
     def getFirstLinesSeen(self):
-	return self.firstLinesSeen
+        return self.firstLinesSeen
 
-
+"""
 if __name__ == '__main__':
     rp.init_node("controller", anonymous=True)
     controller = Controller()
@@ -178,6 +175,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print "Shutting down ROS Image feature detector module."
     cv2.destroyAllWindows()
+"""
 #=================================================================
 #/////////////////////////////////////////////////////////////////
 #=================================================================
