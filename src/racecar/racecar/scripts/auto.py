@@ -1,5 +1,4 @@
 #!/usr/bin/python
-import eye
 import cv2
 import rospy as rp
 from sensor_msgs.msg import Image, Joy
@@ -11,45 +10,18 @@ DEBUG=True
 DISPLAY=False
 RECORD=False
 
-class Controller:
-    kill_switch = 0 # rename this to something that makes more sense
+class Pilot:
     errorList = [0]
     HISTORYSIZE = 10
 
-    def __init__(self):
-        '''Initialize ros publisher, ros subscriber'''
-        # topic where we publish
+    def __init__(self, pilotMode):
+        self.pilotMode = pilotMode
+        rp.init_node("autopilot", anonymous=True)
         self.vesc = rp.Publisher("/vesc/high_level/ackermann_cmd_mux/input/nav_0", AckermannDriveStamped, queue_size=1)
-        self.bridge = CvBridge()
-        # subscribed topic
-        rp.Subscriber("vesc/joy", Joy, self.joy_callback)
-        rp.Subscriber("eyes", Image, self.eyes_callback)
-        if VERBOSE:
-            print "subscribed to /crying_eyes"
 
 
-    def eyes_callback(self, ros_data): # ros_data = img_msg = Image()
-        '''Callback function of subscribed topic.
-        Here images get converted and commands published.'''
-        if VERBOSE:
-            print 'recieved image of type: %s' % ros_data.format
-        image = self.bridge.imgmsg_to_cv2(ros_data, desired_encoding="passthrough")
 
-        left_eye = eye.Eye(image[0:256, 0:672], 'left')
-        right_eye = eye.Eye(image[0:256, 672:1344], 'right')
-
-        linesExist = left_eye.getLinesExist or right_eye.getLinesExist
-        firstLinesSeen = left_eye.getFirstLinesSeen() and right_eye.getFirstLinesSeen()
-        self.controller_(left_eye.getSlope(), right_eye.getSlope(), linesExist, firstLinesSeen)
-        if DISPLAY and cv2.waitKey(1) & 0xFF == ord('q'):
-            pass
-
-
-    def joy_callback(self, ros_data): # ros_data = joy_msg = Joy()
-        self.kill_switch = ros_data.buttons[5]
-
-
-    def controller_(self, leftSlope, rightSlope, linesExist, firstLinesSeen):
+    def controller(self, leftSlope, rightSlope, linesExist, firstLinesSeen):
         direction = ""
         error = leftSlope + rightSlope # sum of slopes
         # steeringAngle = (0.3/2.5)*error
@@ -126,14 +98,6 @@ class Controller:
         return (Kp * P) + (Ki * I) + (Kd * D)
 
 
-if __name__ == '__main__':
-    rp.init_node("controller", anonymous=True)
-    controller = Controller()
-    try:
-        rp.spin()
-    except KeyboardInterrupt:
-        print "Shutting down ROS Image feature detector module."
-    cv2.destroyAllWindows()
 #=================================================================
 #/////////////////////////////////////////////////////////////////
 #=================================================================

@@ -11,9 +11,8 @@ DEBUG=False # not used
 DISPLAY=False
 
 
-class Eye:
-    slope = 0.0
-    helper_functions = helper.Functions()
+class Frame:
+
 
     def __init__(self, image, eye):
         self.image = image
@@ -24,7 +23,7 @@ class Eye:
 
 
     def frame_processor(self, image):
-        f = self.helper_functions
+        f = helper.Functions()
         color = f.hsv_color_selection(image)
         gray = f.gray_scale(color)
         smooth = f.gaussian_smoothing(gray)
