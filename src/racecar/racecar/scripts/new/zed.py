@@ -9,10 +9,9 @@ class Publish:
 
     def __init__(self):
         rp.init_node('zed', anonymous=True)
-        zed = rp.Publisher("zed_imaged", Image, queue_size=1)
+        zed = rp.Publisher("zed/image", Image, queue_size=1)
         rate = rp.Rate(30)
-        bridge = CvBridge()
-        stream()
+        self.stream()
 
 
     def stream(self):
@@ -23,10 +22,15 @@ class Publish:
             #imgCrop = img[188:376, 0:1344]
             imgCrop = img[120:376, 0:1344]
 
-        	zed.publish(self.bridge.cv2_to_imgmsg(imgCrop, encoding="passthrough"))
-        	rate.sleep()
+            zed.publish(self.bridge.cv2_to_imgmsg(imgCrop, encoding="passthrough"))
+            rate.sleep()
 
 
+if __name__ == '__main__':
+    try:
+        stream = Publish()
+    except rp.ROSInterruptException:
+        pass
 #=================================================================
 #/////////////////////////////////////////////////////////////////
 #=================================================================

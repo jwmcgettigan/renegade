@@ -15,9 +15,9 @@ class Renegade:
     bridge = CvBridge()
 
     def __init__(self):
-        zed.Publish()
+        # zed.Publish()
         rp.Subscriber("vesc/joy", Joy, self.joy_callback)
-        rp.Subscriber("zed_image", Image, self.zed_image_callback)
+        rp.Subscriber("zed/image", Image, self.zed_image_callback)
 
 
     def joy_callback(self, ros_data): # ros_data = joy_msg = Joy()

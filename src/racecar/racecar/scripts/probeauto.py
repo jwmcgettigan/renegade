@@ -49,6 +49,15 @@ class Pilot:
         drive_msg_stamped.drive = drive_msg
         self.vesc.publish(drive_msg_stamped)
 
+    def controllerLiDAR(self, offsetBetweenWalls):
+        steeringAngle = offsetBetweenWalls
+        drive_msg_stamped = AckermannDriveStamped()
+        drive_msg = AckermannDrive()
+
+        self.logic(drive_msg, 0, steeringAngle, True)
+        drive_msg_stamped.drive = drive_msg
+        self.vesc.publish(drive_msg_stamped)
+
 
     def logic(self, drive_msg, speed, steeringAngle, linesExist):
         if self.kill_switch:
