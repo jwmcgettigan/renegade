@@ -5,8 +5,7 @@ from sensor_msgs.msg import Image
 import matplotlib.pyplot as plt
 import math
 
-DEBUG = False
-VERBOSE = False
+DEBUG = True
 DISPLAY = False
 #RATE = 1 #1 = 40 Hz, 2 = 20 Hz, 4 == 10 Hz, 8 = 5 Hz, 20 == 2 Hz, 40 == 1 Hz, 80 == 0.5 Hz
 
@@ -125,6 +124,7 @@ class Probe:
         rightWall = self.distanceToWall(abs(angleOfView),FOV)
         leftWall = self.distanceToWall(-abs(angleOfView), FOV)
         distanceBetweenWalls = leftWall - rightWall
+        """
         if DEBUG:
             if (distanceBetweenWalls > 0.2):
                 print(str(distanceBetweenWalls) + "\tRight wall is closer")
@@ -132,14 +132,15 @@ class Probe:
                 print(str(distanceBetweenWalls) + "\tLeft wall is closer")
             else:
                 print(str(distanceBetweenWalls) + "\tEvenly between walls")
+        """
         return distanceBetweenWalls
 
     def angleOfWall(self, frontAngle, rearAngle, FOV):
         deltaAngle = frontAngle - rearAngle
         hypotenuse = self.averageRanges(frontAngle+FOV/2,frontAngle-FOV/2)
         adjacent = self.averageRanges(rearAngle+FOV/2,rearAngle-FOV/2)
-        if DEBUG: print("Hypotenuse" + str(hypotenuse))
-        if DEBUG: print("adjacent" + str(adjacent))
+        # print("Hypotenuse" + str(hypotenuse))
+        # print("adjacent" + str(adjacent))
         opposite = self.lawOfCosinesFindSide(hypotenuse, adjacent, deltaAngle)
         return 90-(self.lawOfCosinesFindAngle(opposite, adjacent, hypotenuse))
         
@@ -151,32 +152,15 @@ class Probe:
         return math.sqrt((float(sideA)**2)+(sideB**2)-(2*sideA*sideB*math.cos(math.pi*angleC/180)))
 
     def theWalls(self):
-        frontAngle = 70
-        wallAngle = 90
-        rearAngle = 110 
-        FOV = 2
-        if (DEBUG & VERBOSE): print("Front Left")
-        frontLeftWall = -self.angleOfWall(-frontAngle,-wallAngle,FOV)
-        if DEBUG & VERBOSE: print("Rear Left")
-        rearLeftWall = self.angleOfWall(-rearAngle,-wallAngle,FOV)
-        if DEBUG & VERBOSE: print("Front Right")
-        frontRightWall = -self.angleOfWall(frontAngle,wallAngle,FOV)
-        if DEBUG & VERBOSE: print("Rear Right")
-        rearRightWall = self.angleOfWall(rearAngle,wallAngle,FOV)
-        if DEBUG | VERBOSE: print("\n\nWall Angles:")
-        if DEBUG | VERBOSE: print("Front Left\t\tFront Right")
-        if DEBUG | VERBOSE: print(str(frontLeftWall)+"\t\t"+str(frontRightWall))
-        if DEBUG | VERBOSE: print("Rear Left\t\tRear Right")
-        if DEBUG | VERBOSE: print(str(rearLeftWall)+"\t\t"+str(rearRightWall))
-
-        slopeOfRightWall = (frontRightWall+rearRightWall)/2
-        slopeOfLeftWall = -(frontLeftWall+rearLeftWall)/2
-        overallSlope = (slopeOfLeftWall+slopeOfRightWall)/2
-        if DEBUG | VERBOSE: print("\nRight Wall Slope " + str(slopeOfRightWall))
-        if DEBUG | VERBOSE: print("Left Wall Slope  " + str(slopeOfLeftWall))
-        if DEBUG | VERBOSE: print("Overall Slope    " + str(overallSlope))
-        return overallSlope
-
+        rearLeftWall = self.angleOfWall(-90,-125,2)
+        frontLeftWall = self.angleOfWall(-55,-90,2)
+        rearRightWall = self.angleOfWall(90,125,2)
+        frontRightWall = self.angleOfWall(55,90,2)
+        print("\n\nWall Angles:")
+        print("Front Left\t\tFront Right")
+        print(str(frontLeftWall)+"\t\t"+str(frontRightWall))
+        print("Rear Left\t\tRear Right")
+        print(str(rearLeftWall)+"\t\t"+str(rearRightWall))
 
     def getRanges(self):
         return self.data.ranges

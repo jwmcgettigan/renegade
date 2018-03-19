@@ -138,8 +138,8 @@ class Probe:
         deltaAngle = frontAngle - rearAngle
         hypotenuse = self.averageRanges(frontAngle+FOV/2,frontAngle-FOV/2)
         adjacent = self.averageRanges(rearAngle+FOV/2,rearAngle-FOV/2)
-        if DEBUG: print("Hypotenuse" + str(hypotenuse))
-        if DEBUG: print("adjacent" + str(adjacent))
+        print("Hypotenuse" + str(hypotenuse))
+        print("adjacent" + str(adjacent))
         opposite = self.lawOfCosinesFindSide(hypotenuse, adjacent, deltaAngle)
         return 90-(self.lawOfCosinesFindAngle(opposite, adjacent, hypotenuse))
         
@@ -155,26 +155,26 @@ class Probe:
         wallAngle = 90
         rearAngle = 110 
         FOV = 2
-        if (DEBUG & VERBOSE): print("Front Left")
+        print("Front Left")
         frontLeftWall = -self.angleOfWall(-frontAngle,-wallAngle,FOV)
-        if DEBUG & VERBOSE: print("Rear Left")
+        print("Rear Left")
         rearLeftWall = self.angleOfWall(-rearAngle,-wallAngle,FOV)
-        if DEBUG & VERBOSE: print("Front Right")
+        print("Front Right")
         frontRightWall = -self.angleOfWall(frontAngle,wallAngle,FOV)
-        if DEBUG & VERBOSE: print("Rear Right")
+        print("Rear Right")
         rearRightWall = self.angleOfWall(rearAngle,wallAngle,FOV)
-        if DEBUG | VERBOSE: print("\n\nWall Angles:")
-        if DEBUG | VERBOSE: print("Front Left\t\tFront Right")
-        if DEBUG | VERBOSE: print(str(frontLeftWall)+"\t\t"+str(frontRightWall))
-        if DEBUG | VERBOSE: print("Rear Left\t\tRear Right")
-        if DEBUG | VERBOSE: print(str(rearLeftWall)+"\t\t"+str(rearRightWall))
+        print("\n\nWall Angles:")
+        print("Front Left\t\tFront Right")
+        print(str(frontLeftWall)+"\t\t"+str(frontRightWall))
+        print("Rear Left\t\tRear Right")
+        print(str(rearLeftWall)+"\t\t"+str(rearRightWall))
 
         slopeOfRightWall = (frontRightWall+rearRightWall)/2
         slopeOfLeftWall = -(frontLeftWall+rearLeftWall)/2
         overallSlope = (slopeOfLeftWall+slopeOfRightWall)/2
-        if DEBUG | VERBOSE: print("\nRight Wall Slope " + str(slopeOfRightWall))
-        if DEBUG | VERBOSE: print("Left Wall Slope  " + str(slopeOfLeftWall))
-        if DEBUG | VERBOSE: print("Overall Slope    " + str(overallSlope))
+        print("\nRight Wall Slope " + str(slopeOfRightWall))
+        print("Left Wall Slope  " + str(slopeOfLeftWall))
+        print("Overall Slope    " + str(overallSlope))
         return overallSlope
 
 

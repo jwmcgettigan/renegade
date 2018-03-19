@@ -6,23 +6,54 @@ from cv_bridge import CvBridge, CvBridgeError
 from ackermann_msgs.msg import AckermannDriveStamped, AckermannDrive
 
 VERBOSE=False
-DEBUG=True
+DEBUG=False
 DISPLAY=False
 RECORD=False
 
 class Pilot:
+
+    def __init__(self, zedData):
+        self.zedData = zedData
+        self.pilotMode = zedData[4]
+        #rp.init_node("autopilot", anonymous=True)
+        self.vesc = rp.Publisher("/vesc/high_level/ackermann_cmd_mux/input/nav_0", AckermannDriveStamped, queue_size=1)
+        zed = ZED(zedData, self)
+        lidar = Lidar(error, self)
+
+
+    def apply_control(self, msg, speed, steeringAngle):
+        msg.speed = speed
+        msg.steering_angle = steeringAngle
+        msg.acceleration = 0
+        msg.jerk = 0
+        msg.steering_angle_velocity = 0
+
+
+    def stop(self, msg):
+        msg.speed = 0
+        msg.steering_angle = 0
+        msg.acceleration = 0
+        msg.jerk = 0
+        msg.steering_angle_velocity = 0
+
+
+class ZED:
     errorList = [0]
     HISTORYSIZE = 10
 
-    def __init__(self, pilotMode):
-        self.pilotMode = pilotMode
-        rp.init_node("autopilot", anonymous=True)
-        self.vesc = rp.Publisher("/vesc/high_level/ackermann_cmd_mux/input/nav_0", AckermannDriveStamped, queue_size=1)
+    def __init__(self, zedData, pilot):
+        pilot.vesc = vesc
+        self.zedData = zedData
+	self.linesExist = zedData[2]
+        self.pilotMode = zedData[4]
+        self.controller(zedData)
 
 
-
-    def controller(self, leftSlope, rightSlope, linesExist, firstLinesSeen):
-        direction = ""
+    def controller(self, zedData):
+	leftSlope = zedData[0] 
+        rightSlope = zedData[1]
+        firstLinesSeen = zedData[3]
+	direction = ""
         error = leftSlope + rightSlope # sum of slopes
         # steeringAngle = (0.3/2.5)*error
         steeringAngle = self.pid_controller(error)
@@ -45,14 +76,14 @@ class Pilot:
         drive_msg_stamped = AckermannDriveStamped()
         drive_msg = AckermannDrive()
 
-        self.logic(drive_msg, speed, steeringAngle, linesExist)
+        self.logic(drive_msg, speed, steeringAngle)
         drive_msg_stamped.drive = drive_msg
         self.vesc.publish(drive_msg_stamped)
 
 
-    def logic(self, drive_msg, speed, steeringAngle, linesExist):
-        if self.kill_switch:
-            if lines_exist:
+    def logic(self, drive_msg, speed, steeringAngle):
+	if self.pilotMode:
+            if self.linesExist:
                 self.apply_control(drive_msg, speed, steeringAngle)
             else:
                 self.apply_control(drive_msg, 1, 0)
@@ -75,6 +106,8 @@ class Pilot:
         msg.jerk = 0
         msg.steering_angle_velocity = 0
 
+
+
     def pid_controller(self, error):
         length = len(self.errorList)
 
@@ -96,6 +129,20 @@ class Pilot:
         Ki = 0 # ignored
         Kd = 0 # ignored
         return (Kp * P) + (Ki * I) + (Kd * D)
+
+
+class Lidar:
+
+    def __init__(self):
+	pass
+
+
+    def controller(self):
+	pass
+
+
+    def logic(self):
+	pass
 
 
 #=================================================================
