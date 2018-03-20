@@ -138,8 +138,8 @@ class Probe:
         deltaAngle = frontAngle - rearAngle
         hypotenuse = self.averageRanges(frontAngle+FOV/2,frontAngle-FOV/2)
         adjacent = self.averageRanges(rearAngle+FOV/2,rearAngle-FOV/2)
-        print("Hypotenuse" + str(hypotenuse))
-        print("adjacent" + str(adjacent))
+        if DEBUG: print("Hypotenuse" + str(hypotenuse))
+        if DEBUG: print("adjacent" + str(adjacent))
         opposite = self.lawOfCosinesFindSide(hypotenuse, adjacent, deltaAngle)
         return 90-(self.lawOfCosinesFindAngle(opposite, adjacent, hypotenuse))
         
@@ -155,26 +155,28 @@ class Probe:
         wallAngle = 90
         rearAngle = 110 
         FOV = 2
-        print("Front Left")
+        if DEBUG: print("Front Left")
         frontLeftWall = -self.angleOfWall(-frontAngle,-wallAngle,FOV)
-        print("Rear Left")
+        if DEBUG: print("Rear Left")
         rearLeftWall = self.angleOfWall(-rearAngle,-wallAngle,FOV)
-        print("Front Right")
+        if DEBUG: print("Front Right")
         frontRightWall = -self.angleOfWall(frontAngle,wallAngle,FOV)
-        print("Rear Right")
+        if DEBUG: print("Rear Right")
         rearRightWall = self.angleOfWall(rearAngle,wallAngle,FOV)
-        print("\n\nWall Angles:")
-        print("Front Left\t\tFront Right")
-        print(str(frontLeftWall)+"\t\t"+str(frontRightWall))
-        print("Rear Left\t\tRear Right")
-        print(str(rearLeftWall)+"\t\t"+str(rearRightWall))
+        if DEBUG:
+            print("\n\nWall Angles:")
+            print("Front Left\t\tFront Right")
+            print(str(frontLeftWall)+"\t\t"+str(frontRightWall))
+            print("Rear Left\t\tRear Right")
+            print(str(rearLeftWall)+"\t\t"+str(rearRightWall))
 
         slopeOfRightWall = (frontRightWall+rearRightWall)/2
         slopeOfLeftWall = -(frontLeftWall+rearLeftWall)/2
         overallSlope = (slopeOfLeftWall+slopeOfRightWall)/2
-        print("\nRight Wall Slope " + str(slopeOfRightWall))
-        print("Left Wall Slope  " + str(slopeOfLeftWall))
-        print("Overall Slope    " + str(overallSlope))
+        if DEBUG:
+            print("\nRight Wall Slope " + str(slopeOfRightWall))
+            print("Left Wall Slope  " + str(slopeOfLeftWall))
+            print("Overall Slope    " + str(overallSlope))
         return overallSlope
 
 

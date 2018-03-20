@@ -1,8 +1,2 @@
-Have gotten the the car to steer using the lidar.
- -Got all of the bugs out of the new class structures.
- -Major restructuring of auto.py
- -The turning value is derived from a combination of the slopes of the walls and the distance from the walls.
- -probe.py needs to be integrated into process.py (and perhaps an accompanying helper script)
- -It may be better to use Lidar and ZED as classes instead of Controller and Logic. This is debatable.
- -The current values need to be adjusted and smoothed. We may also integrate the distance from the walls at multiple points into our turning value.
- -There are temporarily multiple versions of probe.py and probe1.py
+Fine tuning of lidar-controlled steering.
+ -Minor changes.

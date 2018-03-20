@@ -16,15 +16,15 @@ LIDAR=True
 class Renegade:
     bridge = CvBridge()
     theta = []
-    wallAngle = 90 #90 degrees is parallel to car
+    wallAngle = 55 #90 degrees is parallel to car
 
     def __init__(self):
         #zed.Publish()
-	self.createAnglesUsedToPlotGraph()
         rp.Subscriber("vesc/joy", Joy, self.joy_callback)
         if ZED:
             rp.Subscriber("zed/image", Image, self.zed_image_callback)
         if LIDAR:
+	    self.createAnglesUsedToPlotGraph()
             rp.Subscriber("scan", LaserScan, self.probe_callback)	
 
 
@@ -52,19 +52,9 @@ class Renegade:
 
     def probe_callback(self, data):
         theprobe = probe.Probe(data, self.theta)
-        #print(theprobe.averageAllRanges())
-        #print(theprobe.averageRanges(-120,-110))
-        error = -self.turningAngle(data, theprobe)
-	self.lidarData = [error]
-
-
-    def turningAngle(self, data, theprobe):
-    	offset = theprobe.offsetBetweenWalls(self.wallAngle,5)
-    	slope = theprobe.theWalls()
-    	if VERBOSE: print("Wall offset:\t" + str(offset))
-    	if VERBOSE: print("Wall slope:\t" + str(slope))
-    	return slope
-    	#theprobe.theWalls()
+	offset = theprobe.offsetBetweenWalls(self.wallAngle,5)
+	slope = -theprobe.theWalls()
+	self.lidarData = [slope, offset]
 
 
     def offsetBetweenWalls(self, data):

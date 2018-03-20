@@ -12,12 +12,14 @@ global theprobe
 
 DEBUG = False
 VERBOSE = True
-WALLANGLE = 90 #90 degrees is parallel to car
+WALLANGLE = 45 #90 degrees is parallel to car
+inchToMeter = 0.0254
 
 def probe_callback(data):
     global theprobe
     theprobe = probe.Probe(data, theta)
     turningAngle(data)
+    #print(HardStopCondition(data))
     pass
 
 def turningAngle(data):
@@ -27,9 +29,30 @@ def turningAngle(data):
     if True: print("Wall slope:\t" + str(slope))
 
 
+    offsetWeight = 5
+    slopeWeight = 1
+
+    maxTurningAngle = 0.3
+    
+    slopeLimit = 30 #If you reach this angle, TUUUUURRRRN!
+    drivingSlope = -slope*maxTurningAngle/slopeLimit
+    drivingOffset = offset*maxTurningAngle/(4*inchToMeter)
+    drivingAverage = ((drivingSlope*slopeWeight)+(drivingOffset*offsetWeight))/(2*(offsetWeight+slopeWeight))
+    if(VERBOSE):
+        print("driving offset:\t" + str(drivingOffset))
+        print("driving slope:\t" + str(drivingSlope))
+        print("driving average:\t" + str(drivingAverage))
+    
+    if(drivingSlope > .1): print("LEFT")
+    elif (drivingAverage <-0.1): print("RIGHT")
+    else: print("CENTER")
     return slope
     #theprobe.theWalls()
-    
+
+
+def HardStopCondition(data):
+    return (theprobe.averageRanges(-25,25) < .5)
+
 def offsetBetweenWalls(data):
     if VERBOSE: print("\n\n\n\n\n")
     

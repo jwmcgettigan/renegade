@@ -5,8 +5,8 @@ from sensor_msgs.msg import Image, Joy
 from cv_bridge import CvBridge, CvBridgeError
 from ackermann_msgs.msg import AckermannDriveStamped, AckermannDrive
 
-VERBOSE=False
-DEBUG=False
+VERBOSE=True
+DEBUG=True
 DISPLAY=False
 RECORD=False
 
@@ -23,6 +23,8 @@ class Controller:
     zedLogic = []
     lidarLogic = []
     logic = []
+    errorList = [0]
+    historySize = 10
    
     def __init__(self, data, pilotMode, vesc):
 	drive_msg_stamped = AckermannDriveStamped()
@@ -55,7 +57,7 @@ class Controller:
 	direction = ""
         error = leftSlope + rightSlope # sum of slopes
         # steeringAngle = (0.3/2.5)*error
-        steeringAngle = self.pid_controller(error)
+        steeringAngle = self.pid(error, (0.3/2.5), 0, 0)
         if steeringAngle > 0.3: steeringAngle = 0.3
         if steeringAngle < -0.3: steeringAngle = -0.3
         if steeringAngle > 0.02: direction = "Left"
@@ -76,41 +78,51 @@ class Controller:
 
 
     def lidar(self, data):
-	error = data[0]
+	slope = data[0]
+        offset = data[1]
 	wallsExist = True
 	direction = ""
-	steeringAngle = error;
-        if DEBUG:
-	    if (distanceBetweenWalls > 0.2):
-                print(str(distanceBetweenWalls) + "\tRight wall is closer")
-            elif (distanceBetweenWalls < -0.2):
-                print(str(distanceBetweenWalls) + "\tLeft wall is closer")
-            else:
-                print(str(distanceBetweenWalls) + "\tEvenly between walls")
-	speed = 0.4
+
+        offsetWeight = 5
+        slopeWeight = 1
+        maxTurningAngle = 0.3
+        slopeLimit = 30
+        inchToMeter = 0.0254
+
+        slope *= (maxTurningAngle/slopeLimit)
+        offset *= (maxTurningAngle/(12*inchToMeter))
+        error = ((slopeWeight*slope) + (offsetWeight*offset))/(offsetWeight+slopeWeight)
+	#error = ((slopeWeight*slope) + (offsetWeight*offset))/(2*(offsetWeight+slopeWeight))
+	#steeringAngle = error;
+        
+        steeringAngle = self.pid(error, 1, 0, 0)
+        if steeringAngle > 0.3: steeringAngle = 0.3
+        if steeringAngle < -0.3: steeringAngle = -0.3
+        if steeringAngle > 0.02: direction = "Left"
+        elif steeringAngle < -0.02: direction = "Right"
+        else: direction = "Center"
+	if VERBOSE: print "(Direction|Angle) (" + direction + "%|" + str(steeringAngle) + ")"
+        if DEBUG: print "(Offset|Slope|Error) (" + str(offset) + "|" + str(slope) + "|" + str(error) + ")"
+	speed = 0.4#0.4
 	self.lidarLogic = [speed, steeringAngle, wallsExist]
     
 
-    def pid(self, error):
+    def pid(self, error, Kp, Ki, Kd):
         length = len(self.errorList)
 
         # if list is larger than the desired history size -1, remove item at index 0
-        if (length > self.HISTORYSIZE-1):
-                self.errorList.pop(0)
+        if (length > self.historySize-1):
+            self.errorList.pop(0)
 
         self.errorList.append(error) # adds new error to last position in array
 
         P = I = D = 0
         for x in self.errorList:
-                I += x
+            I += x
 
         P = self.errorList[length-1]
         I = (I/length) # averages values
         D = 1 # Placeholder for now.
-
-        Kp = (0.3/2.5) # 0.12
-        Ki = 0 # ignored
-        Kd = 0 # ignored
         return (Kp * P) + (Ki * I) + (Kd * D)
     
 
@@ -157,7 +169,7 @@ class Logic:
 
 
     def apply_control(self, speed, steeringAngle):
-        # steering_angle, steering_angle_velocity, speed, acceleration, jerk
+        # [steering_angle, steering_angle_velocity, speed, acceleration, jerk]
         self.drive_msg.speed = speed
         self.drive_msg.steering_angle = steeringAngle
 
