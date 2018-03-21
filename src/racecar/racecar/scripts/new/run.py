@@ -24,8 +24,8 @@ class Renegade:
         if ZED:
             rp.Subscriber("zed/image", Image, self.zed_image_callback)
         if LIDAR:
-	    self.createAnglesUsedToPlotGraph()
-            rp.Subscriber("scan", LaserScan, self.probe_callback)	
+            self.createAnglesUsedToPlotGraph()
+            rp.Subscriber("scan", LaserScan, self.probe_callback)   
 
 
     def joy_callback(self, ros_data): # ros_data = joy_msg = Joy()
@@ -35,9 +35,9 @@ class Renegade:
         elif ZED:
             data = [self.zedData, 'zed']
         elif LIDAR:
-            data = [self.lidarData, 'lidar']
+            data = [self.lidarData, 'lidar'] #Error here is a race condition
         auto.Pilot(data, pilotMode)
- 
+
 
     def zed_image_callback(self, ros_data): # ros_data = img_msg = Image()
         image = self.bridge.imgmsg_to_cv2(ros_data, desired_encoding="passthrough")
@@ -52,24 +52,14 @@ class Renegade:
 
     def probe_callback(self, data):
         theprobe = probe.Probe(data, self.theta)
-	offset = theprobe.offsetBetweenWalls(self.wallAngle,5)
-	slope = -theprobe.theWalls()
-	self.lidarData = [slope, offset]
-
-
-    def offsetBetweenWalls(self, data):
-    	if VERBOSE: print("\n\n\n\n\n")
-
-    	FOV = 5 #amount of angle of which to see
-    	leftWallDistance = theprobe.distanceToWall(-self.wallAngle,FOV)
-    	rightWallDistance = theprobe.distanceToWall(self.wallAngle,FOV)
-    	offsetBetweenWalls = theprobe.offsetBetweenWalls(self.wallAngle,FOV)
-
-    	if VERBOSE:
-        	print("Left Wall: " + str(leftWallDistance))
-        	print("Right Wall: " + str(rightWallDistance))
-        	print("\nWall offset" + str(offsetBetweenWalls)+"\n")
-    	return offsetBetweenWalls
+        wallOffset = theprobe.offsetBetweenWalls(90,5)
+        forwardOffset = theprobe.offsetBetweenWalls(45,5)
+        slope = -theprobe.theWalls(70,90,110,3)
+        forwardDistance = theprobe.averageRanges(-20,20)
+        stopCondition = (theprobe.averageRanges(-10,10) < .25)
+        #slope = -theprobe.theWalls(45,80,100,3)
+        #theprobe.averageWallSlope(-45,-135)
+        self.lidarData = [slope, wallOffset, forwardOffset, forwardDistance, stopCondition]
 
 
     def createAnglesUsedToPlotGraph(self): #Used in the polar graph as the angles

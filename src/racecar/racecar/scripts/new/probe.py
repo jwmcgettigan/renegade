@@ -4,10 +4,12 @@ from sensor_msgs.msg import LaserScan
 from sensor_msgs.msg import Image
 import matplotlib.pyplot as plt
 import math
+import numpy as np
 
 DEBUG = False
 VERBOSE = False
 DISPLAY = False
+
 #RATE = 1 #1 = 40 Hz, 2 = 20 Hz, 4 == 10 Hz, 8 = 5 Hz, 20 == 2 Hz, 40 == 1 Hz, 80 == 0.5 Hz
 
 
@@ -29,20 +31,14 @@ class Probe:
         self.theta = theta
         pass
 
-
-    # def callback(self, data):
-    # #    plt.close()    
-    # #    plt.figure().clear()
         
     def doTheStuff(self):
-        if DEBUG:
-            print("subscripted to /scan")
+        if DEBUG: print("subscripted to /scan")
 
         self.counter += 1
 
         # if ((self.counter%RATE)==0):
-        if DEBUG:
-            print("A")
+        if DEBUG: print("A")
         ranges = []  
         if REDUCED:  
             for x in xrange(0,1081,REDUCINGFACTOR):
@@ -51,28 +47,21 @@ class Probe:
             for x in range(0,1081):
                 ranges.append(self.data.ranges[x] if self/data.ranges[x] < 10 else 10)
 
-        if DEBUG:
-            print(self.counter)
+        if DEBUG: print(self.counter)
         if DISPLAY:
-            if DEBUG:
-                print("B")
+            if DEBUG: print("B")
             plt.subplot(111,projection='polar')
-            if DEBUG:
-                print("C")
+            if DEBUG: print("C")
             plt.scatter(theta, ranges, s=1)
-            if DEBUG:
-                print("D")
+            if DEBUG: print("D")
             plt.draw()
-            if DEBUG:
-                print("E")
+            if DEBUG: print("E")
     #        plt.pause(RATE/float(80)) #one of these has to be a float otherwise value becomes 0 if RATE < 40
             plt.pause(0.00000001) 
-            if DEBUG:
-                print("F")
+            if DEBUG: print("F")
             #plt.figure().clear()
             plt.clf()
-            if DEBUG:
-                print("G")
+            if DEBUG: print("G")
             #plt.close()
 
         def createAnglesUsedToPlotGraph(): #Used in the polar graph as the angles
@@ -150,45 +139,60 @@ class Probe:
     def lawOfCosinesFindSide(self, sideA, sideB, angleC): #Finds side opposite angleC
         return math.sqrt((float(sideA)**2)+(sideB**2)-(2*sideA*sideB*math.cos(math.pi*angleC/180)))
 
-    def theWalls(self):
-        frontAngle = 70
-        wallAngle = 90
-        rearAngle = 110 
-        FOV = 2
-        if DEBUG: print("Front Left")
+    def theWalls(self, frontAngle, wallAngle, rearAngle, FOV):
+        # frontAngle = 70 #45 #70
+        # wallAngle = 90 #67.5 #90
+        # rearAngle = 110 #90 #110 
+        # FOV = 3#5#2
+        if DEBUG & VERBOSE: print("Front Left")
         frontLeftWall = -self.angleOfWall(-frontAngle,-wallAngle,FOV)
-        if DEBUG: print("Rear Left")
+        if DEBUG & VERBOSE: print("Rear Left")
         rearLeftWall = self.angleOfWall(-rearAngle,-wallAngle,FOV)
-        if DEBUG: print("Front Right")
+        if DEBUG & VERBOSE: print("Front Right")
         frontRightWall = -self.angleOfWall(frontAngle,wallAngle,FOV)
-        if DEBUG: print("Rear Right")
+        if DEBUG & VERBOSE: print("Rear Right")
         rearRightWall = self.angleOfWall(rearAngle,wallAngle,FOV)
-        if DEBUG:
-            print("\n\nWall Angles:")
-            print("Front Left\t\tFront Right")
-            print(str(frontLeftWall)+"\t\t"+str(frontRightWall))
-            print("Rear Left\t\tRear Right")
-            print(str(rearLeftWall)+"\t\t"+str(rearRightWall))
+        if DEBUG | VERBOSE: print("\n\nWall Angles:")
+        if DEBUG | VERBOSE: print("Front Left\t\tFront Right")
+        if DEBUG | VERBOSE: print(str(frontLeftWall)+"\t\t"+str(frontRightWall))
+        if DEBUG | VERBOSE: print("Rear Left\t\tRear Right")
+        if DEBUG | VERBOSE: print(str(rearLeftWall)+"\t\t"+str(rearRightWall))
 
         slopeOfRightWall = (frontRightWall+rearRightWall)/2
         slopeOfLeftWall = -(frontLeftWall+rearLeftWall)/2
         overallSlope = (slopeOfLeftWall+slopeOfRightWall)/2
-        if DEBUG:
-            print("\nRight Wall Slope " + str(slopeOfRightWall))
-            print("Left Wall Slope  " + str(slopeOfLeftWall))
-            print("Overall Slope    " + str(overallSlope))
+        if DEBUG | VERBOSE: print("\nRight Wall Slope " + str(slopeOfRightWall))
+        if DEBUG | VERBOSE: print("Left Wall Slope  " + str(slopeOfLeftWall))
+        if DEBUG | VERBOSE: print("Overall Slope    " + str(overallSlope))
         return overallSlope
 
+    def averageWallSlope(self, frontAngle, rearAngle):
+        tempArray = []
+        angle1 = self.convertAngle(frontAngle)
+        angle2 = self.convertAngle(rearAngle)
 
-    def getRanges(self):
-        return self.data.ranges
+        if (angle1 < angle2):
+            for x in range(angle1, angle2):
+                tempArray.append(self.data.ranges[x])
+        elif (angle1 > angle2):
+            for x in range(angle2, angle1):
+                tempArray.append(self.data.ranges[x])
+        else:
+            print("Error, cannot evaluate average a single position. Wall Slope array is now empty.")
+        npArray = np.array(tempArray, dtype=np.float)
+        npDiff = np.diff(npArray)
+        #print("\n\n\n\n\nnpArray:\t"+str(len(npArray))+" "+str(npArray))
+        #print("npDiff: \t"+str(len(npDiff))+" "+str(npDiff))
+        slopes= []
+        for x in range(0, len(npDiff)):
+            slopes.append(math.atan(npDiff[x])*180/math.pi)
+        #print("Slopes Array: "+str(slopes))
 
-    def getData(self):
-        return self.data
 
+        print("Average of slopes: "+str(sum(slopes)))
 
-
-
+    #def stopCondition(self):
+        #return (self.averageRanges(-10,10) < .25)
     # def displayLidar(self. ranges): #Incomplete
     #     plt.subplot(111, projection='polar')
     #     plt.scatter(ranges, y, color='k', s=4)
@@ -201,12 +205,8 @@ class Probe:
         rp.init_node("lidarListener", anonymous=True)
         #probe = Probe()
         doTheStuff(self)
-        try:
-            print("asdf")
-            rp.spin()
-            print("fdsa")
-        except KeyboardInterrupt:
-            print "Shutting down ROS LiDAR feature dector module."
+        try: rp.spin()
+        except KeyboardInterrupt: print "Shutting down ROS LiDAR feature dector module."
 
 
 ##########################

@@ -1,2 +1,6 @@
-Fine tuning of lidar-controlled steering.
- -Minor changes.
+Have super-fine-tuned the lidar settings.
+ -Slightly improved movement of data throughout code structure.
+ -Implemented the ability to stop and reverse within certain circumstances when using lidar.
+ -Implemented variable speed for when using lidar.
+ -The car moves smoothly and intelligently in most situations.
+ -Need to clean up/move the contents of probe.py and the non-callback functions in run.py

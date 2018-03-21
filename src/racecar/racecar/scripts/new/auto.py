@@ -16,47 +16,37 @@ class Pilot:
         #rp.init_node("autopilot", anonymous=True)
         vesc = rp.Publisher("/vesc/high_level/ackermann_cmd_mux/input/nav_0", AckermannDriveStamped, queue_size=1)
         controller = Controller(data, pilotMode, vesc)
-	#Logic(controller, self)
+    #Logic(controller, self)
 
 
 class Controller:
-    zedLogic = []
-    lidarLogic = []
-    logic = []
+    zedData = []
+    lidarData = []
     errorList = [0]
     historySize = 10
    
     def __init__(self, data, pilotMode, vesc):
-	drive_msg_stamped = AckermannDriveStamped()
-        self.drive_msg = AckermannDrive()
+        drive_msg_stamped = AckermannDriveStamped()
+        drive_msg = AckermannDrive() #self.drive_msg = AckermannDrive()
 
         if data[1]!='zed' and data[1]!='lidar':
-            zedData = data[0]
-            lidarData = data[1]
-	    #self.both(zedDat, lidarData)
-            self.logic = [self.zedLogic, self.lidarLogic]
+            #self.both(data[0], data[1])
+            logicData = [self.zedData, self.lidarData]
         elif data[1]=='zed':
-            zedData = data[0]
-	    self.zed(zedData)
-	    self.logic = [self.zedLogic, 'zed']
+            self.zed(data[0][0], data[0][1], data[0][2], data[0][3])
+            logicData = [self.zedData, 'zed']
         elif data[1]=='lidar':
-            lidarData = data[0]
-	    self.lidar(lidarData)
-	    self.logic = [self.lidarLogic, 'lidar'] 
+            self.lidar(data[0][0], data[0][1], data[0][2], data[0][3], data[0][4])
+            logicData = [self.lidarData, 'lidar']
 
-	Logic(self.logic, self.drive_msg, pilotMode)
-	drive_msg_stamped.drive = self.drive_msg
+        Logic(logicData, drive_msg, pilotMode)
+        drive_msg_stamped.drive = drive_msg
         vesc.publish(drive_msg_stamped)
 
 
-    def zed(self, data):
-	leftSlope = data[0]
-        rightSlope = data[1]
-	linesExist = data[2]
-        firstLinesSeen = data[3]
-	direction = ""
+    def zed(self, leftSlope, rightSlope, linesExist, firstLinesSeen):
+        direction = ""
         error = leftSlope + rightSlope # sum of slopes
-        # steeringAngle = (0.3/2.5)*error
         steeringAngle = self.pid(error, (0.3/2.5), 0, 0)
         if steeringAngle > 0.3: steeringAngle = 0.3
         if steeringAngle < -0.3: steeringAngle = -0.3
@@ -74,37 +64,64 @@ class Controller:
         speedPower = 1.13678
         speed = speedLimit * (1 - abs(steeringAngle))**speedPower
         # speed = 0.4
-        self.zedLogic = [speed, steeringAngle, linesExist]
+        self.zedData = [speed, steeringAngle, linesExist]
 
 
-    def lidar(self, data):
-	slope = data[0]
-        offset = data[1]
-	wallsExist = True
-	direction = ""
+        #TODO: Average all angles from 45-90, replaces wall and forward offset
+    def lidar(self, slope, wallOffset, forwardOffset, forwardDistance, stopCondition):
+        direction = ""
 
-        offsetWeight = 5
-        slopeWeight = 1
+        #Slalom: Great for keeping center, but if goes off center, becomes drunk.
+        #180: Turns late but tight
+        wallOffsetWeight = 2
+        #Slalom: Turns early and sharp
+        #180: Turns sharp early. Half way through turn, goes nearly straight
+        forwardOffsetWeight = 3
+        #Slalom: Turns slower in slalom but smoothish.
+        #180: Very wide
+        slopeWeight = 3
+
         maxTurningAngle = 0.3
         slopeLimit = 30
         inchToMeter = 0.0254
 
         slope *= (maxTurningAngle/slopeLimit)
-        offset *= (maxTurningAngle/(12*inchToMeter))
-        error = ((slopeWeight*slope) + (offsetWeight*offset))/(offsetWeight+slopeWeight)
-	#error = ((slopeWeight*slope) + (offsetWeight*offset))/(2*(offsetWeight+slopeWeight))
-	#steeringAngle = error;
+        wallOffset *= (maxTurningAngle/(12*inchToMeter))
+        forwardOffset *= (maxTurningAngle/(12*inchToMeter))
+        error = ((slopeWeight*slope) + (wallOffsetWeight*wallOffset) + (forwardOffsetWeight*forwardOffset))/(wallOffsetWeight+forwardOffsetWeight+slopeWeight)
+        #error = ((slopeWeight*slope) + (offsetWeight*offset))/(2*(offsetWeight+slopeWeight))
+        #steeringAngle = error;
         
+        speedLimit = 1.7
+        speedPower = 0.4
+        speed = speedLimit - (1/forwardDistance)**speedPower
+
         steeringAngle = self.pid(error, 1, 0, 0)
         if steeringAngle > 0.3: steeringAngle = 0.3
         if steeringAngle < -0.3: steeringAngle = -0.3
-        if steeringAngle > 0.02: direction = "Left"
-        elif steeringAngle < -0.02: direction = "Right"
+        if steeringAngle > 0.05: direction = "Left"
+        elif steeringAngle < -0.05: direction = "Right"
         else: direction = "Center"
-	if VERBOSE: print "(Direction|Angle) (" + direction + "%|" + str(steeringAngle) + ")"
-        if DEBUG: print "(Offset|Slope|Error) (" + str(offset) + "|" + str(slope) + "|" + str(error) + ")"
-	speed = 0.4#0.4
-	self.lidarLogic = [speed, steeringAngle, wallsExist]
+
+        if DEBUG:
+            print "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+            print "Direction:\t "       +                                                 direction
+            print "Steering Angle:\t"   + (' ' if steeringAngle > 0 else '')   + "%.4f" % steeringAngle
+            print "Speed:\t\t"          + (' ' if speed > 0 else '')           + "%.4f" % speed
+            print "\nError:\t\t"        + (' ' if error > 0 else '')           + "%.4f" % error
+            print "Wall Offset\t"       + (' ' if wallOffset > 0 else '')      + "%.4f" % wallOffset
+            print "Forward Offset:\t"   + (' ' if forwardOffset > 0 else '')   + "%.4f" % forwardOffset
+            print "Slope:\t\t"          + (' ' if slope > 0 else '')           + "%.4f" % slope
+            print "Forward Distance:\t:"+ (' ' if forwardDistance > 0 else '') + "%.4f" % forwardDistance
+        
+        #if stopCondition: speed = 0
+        if forwardDistance < 0.35:
+            speed = -5
+            steeringAngle = 0
+
+        reverseCondition = forwardDistance < 0.35
+        
+        self.lidarData = [speed, steeringAngle, stopCondition, reverseCondition]
     
 
     def pid(self, error, Kp, Ki, Kd):
@@ -131,51 +148,46 @@ class Logic:
 
     def __init__(self, data, drive_msg, pilotMode):
         self.drive_msg = drive_msg
-        drive_msg = [0,0,0,0,0]
-	if pilotMode:
-	    if data[1]!='zed' and data[1]!='lidar':
-                zedData = data[0]
-                lidarData = data[1]
-		self.zed(zedData)
-		self.lidar(lidarData)
+        drive_msg = [0,0,0,0,0] # [steering_angle, steering_angle_velocity, speed, acceleration, jerk]
+        if pilotMode:
+            if data[1]!='zed' and data[1]!='lidar':
+                self.zed(data[0][0], data[0][1], data[0][2])
+                self.lidar(data[1][0], data[1][1], data[1][2], data[1][3])
             elif data[0]=='zed':
-                zedData = data[0]
-		self.zed(zedData)
+                self.zed(data[0][0], data[0][1], data[0][2])
             elif data[1]=='lidar':
-                lidarData = data[0]
-		self.lidar(lidarData)
+                self.lidar(data[0][0], data[0][1], data[0][2], data[0][3])
         else:
-	    self.stop()
+            self.stop()
 
 
-    def zed(self, data):
-        speed = data[0]
-        steeringAngle = data[1]
-        linesExist = data[2]
+    def zed(self, speed, steeringAngle, linesExist):
         if linesExist:
             self.apply_control(speed, steeringAngle)
         else:
             self.apply_control(1, 0)
 
 
-    def lidar(self, data):
-        speed = data[0]
-        steeringAngle = data[1]
-        wallsExist = data[2]
-        if wallsExist:
-            self.apply_control(speed, steeringAngle)
-        else:
-            self.apply_control(1, 0)
+    def lidar(self, speed, steeringAngle, stopCondition, reverseCondition):
+        STOP = False
+        REVERSE = not STOP
+
+        if STOP and stopCondition:
+            speed = 0
+        if REVERSE and reverseCondition:
+            speed = -2
+            steeringAngle = 0
+
+        self.apply_control(speed, steeringAngle)
 
 
     def apply_control(self, speed, steeringAngle):
-        # [steering_angle, steering_angle_velocity, speed, acceleration, jerk]
         self.drive_msg.speed = speed
         self.drive_msg.steering_angle = steeringAngle
 
 
     def stop(self):
-        drive_msg = [0,0,0,0,0]
+        self.drive_msg.speed = 0
 
 #=================================================================
 #/////////////////////////////////////////////////////////////////
