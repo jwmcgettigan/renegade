@@ -17,6 +17,7 @@ class Renegade:
     bridge = CvBridge()
     theta = []
     wallAngle = 55 #90 degrees is parallel to car
+    stopList = []
 
     def __init__(self):
         #zed.Publish()
@@ -29,14 +30,14 @@ class Renegade:
 
 
     def joy_callback(self, ros_data): # ros_data = joy_msg = Joy()
-        pilotMode = ros_data.buttons[5]
+        self.pilotMode = ros_data.buttons[5]
         if ZED and LIDAR:
             data = [self.zedData, self.lidarData]
         elif ZED:
             data = [self.zedData, 'zed']
         elif LIDAR:
             data = [self.lidarData, 'lidar'] #Error here is a race condition
-        auto.Pilot(data, pilotMode)
+        auto.Pilot(data, self.pilotMode)
 
 
     def zed_image_callback(self, ros_data): # ros_data = img_msg = Image()
@@ -57,9 +58,14 @@ class Renegade:
         slope = -theprobe.theWalls(70,90,110,3)
         forwardDistance = theprobe.averageRanges(-20,20)
         stopCondition = (theprobe.averageRanges(-10,10) < .25)
+        leftRearObject = theprobe.objectDetection(-90,-125,1,0.9,"Left") #front angle, rear angle, max distance, distance required to detect object#rightRearObject = theprobe.objectDetection(90,125,2,1.8) #front angle, rear angle, max distance, distance required to detect object#rightRearObject = theprobe.objectDetection(90,125,2,1.8) #front angle, rear angle, max distance, distance required to detect object
+        rightRearObject = theprobe.objectDetection(90,125,1,0.9,"Right") #front angle, rear angle, max distance, distance required to detect object#rightRearObject = theprobe.objectDetection(90,125,2,1.8) #front angle, rear angle, max distance, distance required to detect object#rightRearObject = theprobe.objectDetection(90,125,2,1.8) #front angle, rear angle, max distance, distance required to detect object
+
         #slope = -theprobe.theWalls(45,80,100,3)
         #theprobe.averageWallSlope(-45,-135)
-        self.lidarData = [slope, wallOffset, forwardOffset, forwardDistance, stopCondition]
+        if not self.pilotMode:
+            self.stopList = []
+        self.lidarData = [slope, wallOffset, forwardOffset, forwardDistance, stopCondition, self.stopList]
 
 
     def createAnglesUsedToPlotGraph(self): #Used in the polar graph as the angles

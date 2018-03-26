@@ -96,6 +96,22 @@ class Probe:
             print("Error, cannot evaluate average a single position.")
         return averageRangesReturn / abs(angle2-angle1)
 
+    def averageRangesSpecialRanges(self, desiredAngle1, desiredAngle2, tempRanges): #Finds the average distance in meters of the LiDAR responses within the specified range
+        angle1 = self.convertAngle(desiredAngle1)
+        angle2 = self.convertAngle(desiredAngle2)
+        #print(str(angle1) + " :angles: " + str(angle2))
+        averageRangesReturn = 0
+        if (angle1 < angle2):
+            for x in range(angle1,angle2):
+                averageRangesReturn += tempRanges[x]
+        elif (angle1 > angle2):
+            for x in range(angle2, angle1):
+                averageRangesReturn += tempRanges[x]
+        else:
+            averageRangesReturn = 0
+            print("Error, cannot evaluate average a single position.")
+        return averageRangesReturn / abs(angle2-angle1)
+
     def averageAllRanges(self): #Finds the average distance of the LiDAR to the full 270 degree FOV
         return self.averageRanges(-135, 135)
 
@@ -190,6 +206,36 @@ class Probe:
 
 
         print("Average of slopes: "+str(sum(slopes)))
+
+
+
+####################################
+    def averageDistanceWithWeight(self, lesserWeightAngle, greaterWeightAngle, weight):
+        sumDistancesWithWeight = 0
+        convertedLesserAngle = convertAngle(lesserWeightAngle)
+        for x in range(convertAngle(lesserWeightAngle), convertAngle(greaterWeightAngle)):
+            sumDistancesWithWeight += self.data.ranges[x]*(convertedLesserAngle**(1+((x-lesserWeightAngle)/10)))
+        return sumDistancesWithWeight
+
+####################################
+    def reduceMaxDistance(self, newMaxDistance): #To make this a permanent change, assign the result to data.ranges
+        reducedArray = []
+        for x in range(0,len(self.data.ranges)):
+            if self.data.ranges[x] > newMaxDistance: 
+                reducedArray.append(newMaxDistance)
+            else:
+                reducedArray.append(self.data.ranges[x])
+        return reducedArray
+
+
+    def objectDetection(self, frontAngle, rearAngle, tempMaxDistance, objectDetectionCutoffDistance, debugDirectionString):
+        tempRanges = self.reduceMaxDistance(tempMaxDistance)
+        averageSpecialDistance = self.averageRangesSpecialRanges(frontAngle, rearAngle, tempRanges)
+        if DEBUG: print(debugDirectionString+"Average Special Range:\t"+str(averageSpecialRange))
+        return (averageSpecialDistance < objectDetectionCutoffDistance)
+        #Return True/there is an object, if the average distance within this range is less the the cutoff distance, then there must be an object present
+        #\Example: objectDectection(90, 120, 2, 0.9)
+        #If average distance within this range is less than 90% the max possible distance, then there is an object.
 
     #def stopCondition(self):
         #return (self.averageRanges(-10,10) < .25)

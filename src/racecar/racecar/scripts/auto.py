@@ -36,7 +36,7 @@ class Controller:
             self.zed(data[0][0], data[0][1], data[0][2], data[0][3])
             logicData = [self.zedData, 'zed']
         elif data[1]=='lidar':
-            self.lidar(data[0][0], data[0][1], data[0][2], data[0][3], data[0][4])
+            self.lidar(data[0][0], data[0][1], data[0][2], data[0][3], data[0][4], data[0][5])
             logicData = [self.lidarData, 'lidar']
 
         Logic(logicData, drive_msg, pilotMode)
@@ -68,7 +68,7 @@ class Controller:
 
 
         #TODO: Average all angles from 45-90, replaces wall and forward offset
-    def lidar(self, slope, wallOffset, forwardOffset, forwardDistance, stopCondition):
+    def lidar(self, slope, wallOffset, forwardOffset, forwardDistance, stopCondition, stopList):
         direction = ""
 
         #Slalom: Great for keeping center, but if goes off center, becomes drunk.
@@ -79,7 +79,7 @@ class Controller:
         forwardOffsetWeight = 3
         #Slalom: Turns slower in slalom but smoothish.
         #180: Very wide
-        slopeWeight = 3
+        slopeWeight = 4
 
         maxTurningAngle = 0.3
         slopeLimit = 30
@@ -115,13 +115,13 @@ class Controller:
             print "Forward Distance:\t:"+ (' ' if forwardDistance > 0 else '') + "%.4f" % forwardDistance
         
         #if stopCondition: speed = 0
-        if forwardDistance < 0.35:
-            speed = -5
-            steeringAngle = 0
+        #if forwardDistance < 0.35:
+        #    speed = -5
+        #    steeringAngle = 0
 
         reverseCondition = forwardDistance < 0.35
         
-        self.lidarData = [speed, steeringAngle, stopCondition, reverseCondition]
+        self.lidarData = [speed, steeringAngle, stopCondition, reverseCondition, stopList]
     
 
     def pid(self, error, Kp, Ki, Kd):
@@ -156,7 +156,7 @@ class Logic:
             elif data[0]=='zed':
                 self.zed(data[0][0], data[0][1], data[0][2])
             elif data[1]=='lidar':
-                self.lidar(data[0][0], data[0][1], data[0][2], data[0][3])
+                self.lidar(data[0][0], data[0][1], data[0][2], data[0][3], data[0][4])
         else:
             self.stop()
 
@@ -168,7 +168,8 @@ class Logic:
             self.apply_control(1, 0)
 
 
-    def lidar(self, speed, steeringAngle, stopCondition, reverseCondition):
+    def lidar(self, speed, steeringAngle, stopCondition, reverseCondition, stopList):
+        """
         STOP = False
         REVERSE = not STOP
 
@@ -177,7 +178,16 @@ class Logic:
         if REVERSE and reverseCondition:
             speed = -2
             steeringAngle = 0
-
+        """
+        if reverseCondition:
+            speed = -2
+            steeringAngle = 0
+            stopList.append(1)
+        
+        if len(stopList) > 60:
+            steeringAngle = 0
+            speed = 0
+        
         self.apply_control(speed, steeringAngle)
 
 
