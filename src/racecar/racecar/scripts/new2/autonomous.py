@@ -6,8 +6,8 @@
 # I need to relate the processing functions to the mode rather than the component.
 class Autonomous:
 
-    def __init__(self, vesc):
-
+    def __init__(self):
+        pass
 
     def apply_control(self, speed, steeringAngle):
         self.drive_msg.speed = speed
@@ -19,3 +19,4 @@ class Autonomous:
 
 
     def getCommands(self):
+        pass

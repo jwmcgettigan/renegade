@@ -26,12 +26,12 @@ class Car:
         # Need to implement a way to kill a mode when a new one is activated.
         if joyData.buttons[5]: # Autonomous Mode
             if joyData.buttons[1]: # A
-                mode = auto.LineFollow(zed)
+                mode = auto.LineFollow(zed, vesc)
             """
             elif joyData.buttons[2]: # B
-                mode = auto.LaneCenter(lidar)
+                mode = auto.LaneCenter(lidar, vesc)
             elif joyData.buttons[3]: # X
-                mode = auto.Serpentine(zed, lidar)"""
+                mode = auto.Serpentine(zed, lidar, vesc)"""
 
 
 

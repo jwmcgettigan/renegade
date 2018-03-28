@@ -7,8 +7,10 @@ from line import Line
 
 class LineFollow(Autonomous):
 
-    def __init__(self, zed):
+    def __init__(self, zed, vesc):
+        self.driveMsg = vesc.getDriveMsg()
         self.decide(self.control(self.process( zed.getImage() )))
+        vesc.setDriveMsg(self.driveMsg)
 
     # I need to seperate the processing done in Camera (and the zed file in general).
     def process(self, image):

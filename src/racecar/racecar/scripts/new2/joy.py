@@ -3,6 +3,7 @@
 # joy controller data can be retrieved from this file
 # subscribe to joy controller
 
+import rospy as rp
 from sensor_msgs.msg import Joy
 
 class Joy:
