@@ -172,8 +172,9 @@ class Functions:
     def getLinesExist(self):
         return self.linesExist
 
+
     def getFirstLinesSeen(self):
-	return self.firstLinesSeen
+        return self.firstLinesSeen
 
 #=================================================================
 #/////////////////////////////////////////////////////////////////
