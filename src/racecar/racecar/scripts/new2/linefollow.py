@@ -3,6 +3,7 @@
 #
 
 from autonomous import Autonomous
+from line import Line
 
 class LineFollow(Autonomous):
 
@@ -11,34 +12,17 @@ class LineFollow(Autonomous):
 
     # I need to seperate the processing done in Camera (and the zed file in general).
     def process(self, image):
-        left = processCamera(image[0:256, 0:672], 'left')
-        right = processCamera(image[0:256, 672:1344], 'right')
+        left = camera(image[0:256, 0:672], 'left')
+        right = camera(image[0:256, 672:1344], 'right')
         linesExist = left.getLinesExist() or right.getLinesExist()
         firstLinesSeen = left.getFirstLinesSeen() and right.getFirstLinesSeen()
         return left.getSlope(), right.getSlope(), linesExist, firstLinesSeen
 
 
-    def processCamera(self, image, camera):
-        processedFrame = self.processFrame(image)
+    def camera(self, image, side):
+        line = Line(image)
         if DISPLAY:
-            cv2.imshow(eye + ' Eye', processedFrame)
-
-
-    def processFrame(self, image):
-        util   = Utility()
-        color  = util.hsv_color_selection(image)
-        gray   = util.gray_scale(color)
-        smooth = util.gaussian_smoothing(gray)
-        edges  = util.canny_detector(smooth)
-        hough  = util.hough_transform(edges)
-        self.linesExist     = util.getLinesExist()
-        self.firstLinesSeen = util.getFirstLinesSeen()
-        if DISPLAY:
-            result = util.draw_lane_line(image, util.lane_line(image, hough))
-            return result
-        else:
-            util.lane_line(image, hough)
-        self.slope = util.getSlope()
+            cv2.imshow(side + ' Camera', line.draw())
 
 
     def control(self, leftSlope, rightSlope, linesExist, firstLinesSeen):

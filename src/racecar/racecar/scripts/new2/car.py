@@ -7,7 +7,7 @@ import rospy as rp
 from zed import Zed
 from lidar import Lidar
 from vesc import Vesc
-import joy
+from joy import Joy
 import autonomous as auto
 
 VERBOSE=False
@@ -19,17 +19,19 @@ class Car:
 
     def __init__(self):
         #rp.init_node("car", anonymous=True)
-        joyData = joy.Joy().getData()
+        joyData = Joy().getData()
         vesc = Vesc()
         zed = Zed()
         lidar = Lidar()
         # Need to implement a way to kill a mode when a new one is activated.
-        if joyData.buttons[1]: #A
-            mode = auto.LineFollow(zed)
-        elif joyData.buttons[2]: #B
-            mode = auto.LaneCenter(lidar)
-        elif joyData.buttons[3]: #X
-            mode = auto.Serpentine(zed, lidar)
+        if joyData.buttons[5]: # Autonomous Mode
+            if joyData.buttons[1]: # A
+                mode = auto.LineFollow(zed)
+            """
+            elif joyData.buttons[2]: # B
+                mode = auto.LaneCenter(lidar)
+            elif joyData.buttons[3]: # X
+                mode = auto.Serpentine(zed, lidar)"""
 
 
 

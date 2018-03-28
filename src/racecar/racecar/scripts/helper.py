@@ -152,7 +152,6 @@ class Functions:
         line_image = np.zeros_like(image)
         #cv2.line(line_image, (Functions.x1, lines[0][1]), lines[1], [0, 255, 0], thickness)
         try:
-            self.isLine = True
             cv2.line(line_image, lines[0], lines[1], [0, 0, 255], thickness)
             return cv2.addWeighted(image, 1.0, line_image, 1.0, 0.0)
         except:
