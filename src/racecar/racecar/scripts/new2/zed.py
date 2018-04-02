@@ -11,25 +11,60 @@ DISPLAY=False
 
 class Zed:
     bridge = CvBridge()
-    cap = cv2.VideoCapture(1)
 
     def __init__(self):
-        #rp.init_node('car/zed', anonymous=True)
-        self.zed = rp.Publisher("zed/image", Image, queue_size=1)
-        rp.Subscriber("zed/image", Image, self.callback)
+        pass
 
 
-    # I should to derive the height and width using variables.
-    def publish(self):
-        ret, img = self.cap.read()
-        imgCrop = img[120:376, 0:1344]
-        self.zed.publish(self.bridge.cv2_to_imgmsg(imgCrop, encoding="passthrough"))
-
-
-    def callback(self, data):
-        self.publish()
+    def setImage(self, data):
         self.image = self.bridge.imgmsg_to_cv2(data, desired_encoding="passthrough")
 
 
     def getImage(self):
         return self.image
+
+
+class Publisher:
+    bridge = CvBridge()
+
+    def __init__(self):
+        rp.init_node('zed', anonymous=True)
+        #self.zedNorm = rp.Publisher("zed/normal", Image, queue_size=1)
+        self.zedCrop = rp.Publisher("zed/cropped", Image, queue_size=1)
+        #self.zedStream = rp.Publisher("zed/stream", Image, queue_size=1)
+        self.rate = rp.Rate(30)
+        self.publish()
+        pass
+
+
+    def publish(self):
+        cap = cv2.VideoCapture(1)
+        while not rp.is_shutdown():
+            ret, img = cap.read()
+            #self.publishNormal(img)
+            self.publishCropped(img)
+            #self.publishStream(img)
+            self.rate.sleep()
+
+
+    # I should try to derive the height and width using variables.
+    def publishNormal(self, img):
+        imgCrop = img[0:376, 0:1344]
+        self.zedNorm.publish(self.bridge.cv2_to_imgmsg(imgCrop, encoding="passthrough"))
+
+
+    def publishCropped(self, img):
+        imgCrop = img[120:376, 0:1344]
+        self.zedCrop.publish(self.bridge.cv2_to_imgmsg(imgCrop, encoding="passthrough"))
+
+
+    def publishStream(self, img):
+        imgCrop = img[0:376, 0:1344]
+        self.zedStream.publish(self.bridge.cv2_to_imgmsg(imgCrop, encoding="bgr8"))
+
+
+if __name__ == '__main__':
+    try:
+        publisher = Publisher()
+    except rp.ROSInterruptException:
+        pass

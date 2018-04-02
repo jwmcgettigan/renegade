@@ -3,12 +3,13 @@
 #
 
 from object import Object
+import cv2, numpy as np
 
 class Line(Object):
     slope = x1 = 0.0
 
     def __init__(self, image):
-        create(image)
+        self.detect(image)
 
 
     def getSlope(self):
@@ -23,8 +24,8 @@ class Line(Object):
         return self.firstLinesSeen
 
 
-    def create(self, image):
-        houghLines = processFrame(image)
+    def detect(self, image):
+        houghLines = self.processFrame(image)
         try:
             y1 = image.shape[0]
             y2 = 0
@@ -121,6 +122,8 @@ class Line(Object):
 
 
 class Utility:
+    firstLinesSeen = False
+    lastHoughLines = None
 
     def __init__(self):
         pass
@@ -177,7 +180,7 @@ class Utility:
         houghLines = cv2.HoughLinesP(image, rho = rho, theta = theta, threshold = threshold, minLineLength = minLineLength, maxLineGap = maxLineGap)
         if houghLines is not None:
             if self.firstLinesSeen == False:
-                print "\nA line has been detected.\n"
+                print "A line has been detected."
                 self.firstLinesSeen = True
             self.linesExist = True
             self.lastHoughLines = houghLines

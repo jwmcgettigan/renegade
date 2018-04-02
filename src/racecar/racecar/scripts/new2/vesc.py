@@ -17,7 +17,7 @@ class Vesc:
 
     def publish(self):
         self.driveMsgStamped.drive = self.driveMsg
-        self.vesc.publish(driveMsgStamped)
+        self.vesc.publish(self.driveMsgStamped)
 
 
     def getDriveMsg(self):
