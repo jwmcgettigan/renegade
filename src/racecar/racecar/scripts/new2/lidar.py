@@ -11,17 +11,20 @@ class Lidar:
 
     def __init__(self):
         #rp.init_node('car/lidar', anonymous=True)
-        rp.Subscriber("scan", LaserScan, self.callback)
+        pass
 
-
+    """
     def callback(self, data):
-        """Do these need to run in a certain order?"""
+        #Do these need to run in a certain order?
         self.util = Utility(data)
         self.data = data
 
 
     def getUtil(self):
-        return self.util
+        return self.util"""
+
+    def setData(self, data):
+        self.data = data
 
 
     def getData(self):

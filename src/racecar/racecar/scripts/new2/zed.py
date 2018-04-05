@@ -3,7 +3,7 @@
 # zed data can be retrieved from this file
 # publish and subscribe to zed
 
-import cv2, rospy as rp
+import cv2, rospy as rp, numpy as np
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -29,8 +29,7 @@ class Publisher:
 
     def __init__(self):
         rp.init_node('zed', anonymous=True)
-        #self.zedNorm = rp.Publisher("zed/normal", Image, queue_size=1)
-        self.zedCrop = rp.Publisher("zed/cropped", Image, queue_size=1)
+        self.zedNormal = rp.Publisher("zed/normal", Image, queue_size=1)
         #self.zedStream = rp.Publisher("zed/stream", Image, queue_size=1)
         self.rate = rp.Rate(30)
         self.publish()
@@ -41,30 +40,28 @@ class Publisher:
         cap = cv2.VideoCapture(1)
         while not rp.is_shutdown():
             ret, img = cap.read()
-            #self.publishNormal(img)
-            self.publishCropped(img)
-            #self.publishStream(img)
+            self.normal(img)
+            #self.stream(img)
             self.rate.sleep()
 
 
     # I should try to derive the height and width using variables.
-    def publishNormal(self, img):
-        imgCrop = img[0:376, 0:1344]
-        self.zedNorm.publish(self.bridge.cv2_to_imgmsg(imgCrop, encoding="passthrough"))
+    def normal(self, img):
+        height, width = img.shape[:2]
+        top = 120
+        bottom = height
+        left = 0
+        right = width
+        imgCrop = img[top:bottom, left:right]
+        self.zedNormal.publish(self.bridge.cv2_to_imgmsg(imgCrop, encoding="passthrough"))
 
 
-    def publishCropped(self, img):
-        imgCrop = img[120:376, 0:1344]
-        self.zedCrop.publish(self.bridge.cv2_to_imgmsg(imgCrop, encoding="passthrough"))
-
-
-    def publishStream(self, img):
-        imgCrop = img[0:376, 0:1344]
-        self.zedStream.publish(self.bridge.cv2_to_imgmsg(imgCrop, encoding="bgr8"))
+    def stream(self, img):
+        self.zedStream.publish(self.bridge.cv2_to_imgmsg(img, encoding="bgr8"))
 
 
 if __name__ == '__main__':
     try:
         publisher = Publisher()
     except rp.ROSInterruptException:
-        pass
+        print "You messed up!"
