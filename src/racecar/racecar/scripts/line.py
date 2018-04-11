@@ -9,11 +9,16 @@ class Line(Object):
     slope = x1 = 0.0
 
     def __init__(self, image):
-        self.detect(image)
+        self.image = image
+        self.coords = self.create(image)
 
 
     def getSlope(self):
         return self.slope
+
+
+    def getCoords(self):
+        return self.coords
 
 
     def getLinesExist(self):
@@ -24,7 +29,7 @@ class Line(Object):
         return self.firstLinesSeen
 
 
-    def detect(self, image):
+    def create(self, image):
         houghLines = self.processFrame(image)
         try:
             y1 = image.shape[0]
@@ -35,7 +40,7 @@ class Line(Object):
             pass
 
 
-    def draw(self, image, coords, thickness=12):
+    def draw(self, thickness=12):
         """
         Draw lines onto the input image.
             Parameters:
@@ -45,13 +50,13 @@ class Line(Object):
         cv2.line(img, pt1, pt2, color, thickness)
         cv2.line(img, (x1, y1), (x2, y2), [0, 0, 255], thickness)
         """
-        line_image = np.zeros_like(image)
+        line_image = np.zeros_like(self.image)
         #cv2.line(line_image, (Functions.x1, lines[0][1]), lines[1], [0, 255, 0], thickness)
         try:
-            cv2.line(line_image, coords[0], coords[1], [0, 0, 255], thickness)
-            return cv2.addWeighted(image, 1.0, line_image, 1.0, 0.0)
+            cv2.line(line_image, self.coords[0], self.coords[1], [0, 0, 255], thickness)
+            return cv2.addWeighted(self.image, 1.0, line_image, 1.0, 0.0)
         except:
-            pass
+            return self.image
 
 
     # Do I need to create a new Utility object every loop?

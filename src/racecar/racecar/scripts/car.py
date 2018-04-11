@@ -4,13 +4,18 @@
 # instantiates lidar, zed, and vesc
 
 import cv2, rospy as rp
+
+from sensor_msgs.msg import Image, LaserScan, Joy as JoyMsg
 from zed import Zed
 from lidar import Lidar
 from vesc import Vesc
 from joy import Joy
-import autonomous as auto
+
 from linefollow import LineFollow
-from sensor_msgs.msg import Image, LaserScan, Joy as JoyMsg
+from polebending import Polebending
+from parallel import Parallel
+from roundabout import Roundabout
+from serpentine import Serpentine
 
 VERBOSE=False
 DEBUG=False
@@ -21,19 +26,28 @@ class Car:
     mode = [0, 0, 0, 0] # lineFollow, laneCenter, serpentine
 
     def __init__(self):
+        """Initialize the components of the car."""
         rp.init_node("car", anonymous=True)
         self.joy = Joy()
         self.zed = Zed()
         self.lidar = Lidar()
         self.vesc = Vesc()
+
         rp.Subscriber("vesc/joy", JoyMsg, self.joy_callback)
         rp.Subscriber("zed/normal", Image, self.zed_callback)
         rp.Subscriber("scan", LaserScan, self.lidar_callback)
 
+        """
+        lineFollow = LineFollow(vesc)
+        laneCenter = LaneCenter(vesc)
+        polebending = Polebending(vesc)
+        parallel = Parallel(vesc)
+        roundabout = Roundabout(vesc)"""
+
 
     def controller(self, zed, vesc):
         joyData = self.joy.getData()
-        print self.mode
+        #print self.mode
         if joyData.buttons[5]: # Autonomous Mode
             if   joyData.buttons[0]: self.mode = [1, 0, 0, 0] # X
             elif joyData.buttons[1]: self.mode = [0, 1, 0, 0] # A
@@ -47,8 +61,10 @@ class Car:
                 #LaneCenter(lidar, vesc)
                 pass
             elif self.mode[2]:
-                #Serpentine(zed, lidar, vesc)
-                pass
+                #Polebending(zed, vesc)
+                #Parallel(zed, lidar, vesc)
+                Serpentine(zed, vesc)
+                #Roundabout(zed, lidar, vesc)
 
 
     def joy_callback(self, data):

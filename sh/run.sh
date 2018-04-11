@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python ~/racecar-ws/src/racecar/racecar/scripts/new/run.py
+python ~/racecar-ws-develop/src/racecar/racecar/scripts/new2/run.py

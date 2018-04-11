@@ -1,3 +1,3 @@
 #!/bin/bash
-screen -dmS teleop ../teleop.sh
+source ~/racecar-ws-develop/devel/setup.bash && screen -dmS teleop ../teleop.sh
 
