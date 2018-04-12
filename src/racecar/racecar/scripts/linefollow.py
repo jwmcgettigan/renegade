@@ -6,13 +6,13 @@ from mode import Mode
 from line import Line
 import cv2
 
-DISPLAY=False
 DEBUG=False
 
 class LineFollow(Mode):
 
-    def __init__(self, zed, vesc):
+    def __init__(self, zed, vesc, DISPLAY):
         super(LineFollow, self).__init__(vesc)
+        self.DISPLAY = DISPLAY
         self.process(zed.getImage())
         vesc.setDriveMsg(self.driveMsg)
         vesc.publish()
@@ -29,7 +29,7 @@ class LineFollow(Mode):
 
     def camera(self, image, side):
         line = Line(image)
-        if DISPLAY:
+        if self.DISPLAY:
             cv2.imshow(side + ' Camera', line.draw())
             cv2.waitKey(1)
         return line

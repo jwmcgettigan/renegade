@@ -19,11 +19,12 @@ from serpentine import Serpentine
 
 VERBOSE=False
 DEBUG=False
-DISPLAY=False
 RECORD=False
 
 class Car:
     mode = [0, 0, 0, 0] # lineFollow, laneCenter, serpentine
+    DISPLAY = False
+    displayList = []
 
     def __init__(self):
         """Initialize the components of the car."""
@@ -45,9 +46,9 @@ class Car:
         roundabout = Roundabout(vesc)"""
 
 
-    def controller(self, zed, vesc):
+    def controller(self, zed, lidar, vesc):
         joyData = self.joy.getData()
-        #print self.mode
+        #Serpentine(zed, lidar, vesc, self.DISPLAY)
         if joyData.buttons[5]: # Autonomous Mode
             if   joyData.buttons[0]: self.mode = [1, 0, 0, 0] # X
             elif joyData.buttons[1]: self.mode = [0, 1, 0, 0] # A
@@ -55,15 +56,23 @@ class Car:
             elif joyData.buttons[3]: self.mode = [0, 0, 0, 1] # Y
             elif joyData.buttons[8]: self.mode = [0, 0, 0, 0] # BACK
 
+            if joyData.buttons[9]: # START
+                self.displayList.append(1)
+                if len(self.displayList) > 3:
+                    cv2.destroyAllWindows()
+                    self.DISPLAY = not self.DISPLAY
+                    self.displayList = []
+
+
             if self.mode[0]:
-                LineFollow(zed, vesc)
+                LineFollow(zed, vesc, self.DISPLAY)
             elif self.mode[1]:
                 #LaneCenter(lidar, vesc)
                 pass
             elif self.mode[2]:
                 #Polebending(zed, vesc)
                 #Parallel(zed, lidar, vesc)
-                Serpentine(zed, vesc)
+                Serpentine(zed, lidar, vesc, self.DISPLAY)
                 #Roundabout(zed, lidar, vesc)
 
 
@@ -73,7 +82,7 @@ class Car:
 
     def zed_callback(self, data):
         self.zed.setImage(data)
-        self.controller(self.zed, self.vesc)
+        self.controller(self.zed, self.lidar, self.vesc)
 
 
     def lidar_callback(self, data):

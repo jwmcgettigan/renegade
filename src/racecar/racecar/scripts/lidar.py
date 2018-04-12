@@ -11,17 +11,8 @@ class Lidar:
 
     def __init__(self):
         #rp.init_node('car/lidar', anonymous=True)
-        pass
+        self.theta = self.createTheta()
 
-    """
-    def callback(self, data):
-        #Do these need to run in a certain order?
-        self.util = Utility(data)
-        self.data = data
-
-
-    def getUtil(self):
-        return self.util"""
 
     def setData(self, data):
         self.data = data
@@ -29,6 +20,20 @@ class Lidar:
 
     def getData(self):
         return self.data
+
+
+    def getTheta(self):
+        return self.theta
+
+
+    def createTheta(self):
+        """Angles used to plot graph."""
+        REDUCED, REDUCINGFACTOR, theta = False, 10, []
+        if REDUCED:
+            for x in xrange(0,1081,REDUCINGFACTOR): theta.append(x*0.00436332309619)
+        else:
+            for x in range(0,1081): theta.append(x*0.00436332309619) #data.angle_increment == PI/(4*180) == 0.00436332309619
+        return theta
 
 
 class Utility:

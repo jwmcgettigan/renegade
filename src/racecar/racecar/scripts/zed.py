@@ -24,6 +24,10 @@ class Zed:
         return self.image
 
 
+    def getDimensions(self): # returns: height, width
+        return self.image.shape[:2]
+
+
 class Publisher:
     bridge = CvBridge()
 
@@ -60,7 +64,7 @@ class Publisher:
         left = 0
         right = width"""
         #imgCrop = img[top:bottom, left:right]
-        imgCrop = img[120:376,0:1344]
+        imgCrop = img[0:376,0:1344]
         self.zedNormal.publish(self.bridge.cv2_to_imgmsg(imgCrop, encoding="passthrough"))
 
 
