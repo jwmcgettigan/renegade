@@ -5,7 +5,7 @@ import cv2
 def nothing():
     pass
 
-image = cv2.imread('C:\Users\jmcgettigan\Pictures\serpentineSlow.png')
+image = cv2.imread('C:\Users\jmcgettigan\Pictures\simpleColor.png')
 placeholder = cv2.imread('C:\Users\jmcgettigan\Pictures\\trackbarPlaceholder.jpg')
 
 """The coordinates of vertices of the triangle."""

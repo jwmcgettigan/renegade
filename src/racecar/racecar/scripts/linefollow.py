@@ -34,8 +34,9 @@ class LineFollow(Mode):
 
     # I need to seperate the processing done in Camera (and the zed file in general).
     def process(self, image):
-        left = self.side(image[0:256, 0:672], 'left')
-        right = self.side(image[0:256, 672:1344], 'right')
+        height, width = image.shape[:2]
+        left = self.side(image[120:height, :width/2], 'left')
+        right = self.side(image[120:height, width/2:width], 'right')
         linesExist = left.getLinesExist() or right.getLinesExist()
         firstLinesSeen = left.getFirstLinesSeen() and right.getFirstLinesSeen()
         return self.control(left.getSlope(), right.getSlope(), linesExist, firstLinesSeen)

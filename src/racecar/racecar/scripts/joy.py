@@ -16,4 +16,7 @@ class Joy:
 
 
     def getData(self):
-        return self.data
+        try:
+            return self.data
+        except:
+            pass

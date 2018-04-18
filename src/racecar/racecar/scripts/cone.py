@@ -13,6 +13,7 @@ class Cone(Item):
     # weight (significance/priority of object)
 
     def __init__(self, contour, image, distance, angle):
+        super(Cone, self).__init__()
         self.center = self.calculateCenter(contour)
         self.bounds = self.calculateBounds(contour)
         self.contour = contour

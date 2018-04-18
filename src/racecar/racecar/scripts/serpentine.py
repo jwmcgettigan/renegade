@@ -50,8 +50,8 @@ class Serpentine(Polebending):
         self.data = lidar.getData() # Get lidar data
         self.driveMsg = vesc.getDriveMsg() # Get AckermannDrive
         self.process(zed.getImage()) # Processes the the data
-        self.vesc.setDriveMsg(self.driveMsg) # Set AckermannDrive
-        self.vesc.publish() # Publish to vesc
+        vesc.setDriveMsg(self.driveMsg) # Set AckermannDrive
+        vesc.publish() # Publish to vesc
 
 
     def getLastDirection(self):
@@ -329,8 +329,6 @@ class Serpentine(Polebending):
             #return Cone(c, image)
             #for c in contours:
                 #if largest and closest, create cone object
-        else:
-            pass
 
 
     def rangeAnalysis(self, ranges):
@@ -353,8 +351,7 @@ class Serpentine(Polebending):
 
 
     def fromAngle(self, angle): #Input = angle normal people use. Counter clockwise from -135 to 135
-        angle += 135
-        return int(1081-(angle*(float(1081)/270))) #1081 is max angle (back left). (Angle+135)*len(LidarRanges)/len(RearAngles)
+        return int(1081-((angle + 135)*(float(1081)/270))) #1081 is max angle (back left). (Angle+135)*len(LidarRanges)/len(RearAngles)
 
 
     def toAngle(self, index):

@@ -5,12 +5,14 @@
 from item import Item
 import cv2, numpy as np
 
+DEBUG=False
+
 class Line(Item):
     slope = x1 = 0.0
 
     def __init__(self, image):
-        self.image = image
         self.coords = self.create(image)
+        self.image = image
 
 
     def getSlope(self):
@@ -56,6 +58,7 @@ class Line(Item):
             cv2.line(line_image, self.coords[0], self.coords[1], [0, 0, 255], thickness)
             return cv2.addWeighted(self.image, 1.0, line_image, 1.0, 0.0)
         except:
+            #print "CAN'T DRAW LINE"
             return self.image
 
 

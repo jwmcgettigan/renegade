@@ -13,7 +13,7 @@ class colorFilter:
 
     def __init__(self, color):
         functions = h.Functions()
-        self.cap = cv2.VideoCapture('C:/Users/jmcgettigan/Desktop/renegade_videos/crazyCones.avi')
+        self.cap = cv2.VideoCapture('C:/Users/jmcgettigan/Desktop/renegade_videos/slowBlueLaneFull.avi')
         self.image = cv2.imread('C:\Users\jmcgettigan\Pictures\serpentineSlow.png')
         placeholder = cv2.imread('C:/Users/jmcgettigan/Pictures/trackbarPlaceholder.jpg')
         self.createWindowsAndSliders(color, placeholder, functions)

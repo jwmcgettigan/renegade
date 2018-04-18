@@ -34,7 +34,7 @@ class Publisher:
     def __init__(self):
         rp.init_node('zed', anonymous=True)
         self.zedNormal = rp.Publisher("zed/normal", Image, queue_size=1)
-        #self.zedStream = rp.Publisher("zed/stream", Image, queue_size=1)
+        self.zedStream = rp.Publisher("zed/stream", Image, queue_size=1)
         self.rate = rp.Rate(30)
         self.publish()
 
@@ -65,7 +65,8 @@ class Publisher:
         right = width"""
         #imgCrop = img[top:bottom, left:right]
         #imgCrop = img[0:376,0:1344]
-        imgCrop = cv2.resize(img, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_AREA)
+        imgCrop = img
+        #imgCrop = cv2.resize(img, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_AREA)
         self.zedNormal.publish(self.bridge.cv2_to_imgmsg(imgCrop, encoding="passthrough"))
 
 
