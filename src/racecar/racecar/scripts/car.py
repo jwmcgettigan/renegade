@@ -18,6 +18,7 @@ from orbit import Orbit
 from serpentine import Serpentine
 from parking import Parking
 from avoiding import Avoiding
+# from wall import Wall
 
 VERBOSE=False
 DEBUG=False
@@ -43,6 +44,7 @@ class Car:
 
         self.serpentine = Serpentine("", False, -1, -2)
         self.lineFollow = LineFollow()
+        # self.wall = Wall()
 
         self.laneCenter = LaneCenter()
         self.orbit = Orbit()
@@ -68,7 +70,7 @@ class Car:
         else:
             self.serpentine.resetValues()
 
-        """
+"""
         if joyButtons[5]: # Autonomous Mode
 
             #
@@ -77,15 +79,16 @@ class Car:
             else:
                 cv2.destroyAllWindows()
                 self.DISPLAY = False
-                """
-                """
+"""
+
+"""
                 self.displayList.append(1)
                 if len(self.displayList) > 3:
                     cv2.destroyAllWindows()
                     self.DISPLAY = not self.DISPLAY
                     self.displayList = []
-                """
-            """
+"""
+"""
             if self.mode[0][0]: # X
                 #LineFollow(zed, vesc, self.DISPLAY)
                 Avoiding(zed, lidar, vesc, self.DISPLAY)
@@ -107,7 +110,7 @@ class Car:
                 Parallel(zed, lidar, vesc, self.DISPLAY)
         else:
             self.serpentineValues = ["", False, -1, -2]
-        """
+"""
 
 
     def setMode(self, buttons):
@@ -124,6 +127,7 @@ class Car:
             self.lineFollow.run(zed, vesc, DISPLAY)
         elif self.mode[0][1]: # A
             pass
+            # self.wall.getWall(lidar)
         elif self.mode[0][2]: # B
             self.serpentine.run(zed, lidar, vesc, self.DISPLAY)
         elif self.mode[0][3]: # Y
@@ -143,10 +147,10 @@ class Car:
         self.lidar.setData(data)
 
 
-if __name__ == '__main__':
-    renegade = Car()
-    try:
-        rp.spin()
-    except KeyboardInterrupt:
-        pass
-    cv2.destroyAllWindows()
+    if __name__ == '__main__':
+        renegade = Car()
+        try:
+            rp.spin()
+        except KeyboardInterrupt:
+            pass
+        cv2.destroyAllWindows()
