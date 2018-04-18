@@ -5,7 +5,7 @@
 from item import Item
 import cv2, numpy as np
 
-class Cone(Item):
+class Cube:
     # color (hsv)
     # size (radius)
     # boundingBox (box around object)
@@ -42,7 +42,7 @@ class Cone(Item):
 
 
     def getIsCube(self):
-        return False
+        return True
 
 
     def getBounds(self):
@@ -51,15 +51,16 @@ class Cone(Item):
 
     def draw(self):
         c = self.contour
-        self.drawCenter(c, self.image)
         self.drawRectangle(c, self.image)
+        self.drawCenter(c, self.image)
         return self.image
 
 
     def drawRectangle(self, c, image):
         x,y,w,h = self.bounds
+        print "%.2f %.2f %.2f %.2f" % (x, y, w, h)
         cv2.rectangle(image, (x,y), (x+w,y+h),(0,255,0),2)
-        cv2.putText(image, "CONE", (self.center[0] - w/2, self.center[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        cv2.putText(image, "CUBE", (self.center[0] - w/2, self.center[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
 
     def drawCenter(self, c, image):

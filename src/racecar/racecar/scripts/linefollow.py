@@ -10,24 +10,38 @@ DEBUG=False
 
 class LineFollow(Mode):
 
+    """
     def __init__(self, zed, vesc, DISPLAY):
-        super(LineFollow, self).__init__(vesc)
+        super(LineFollow, self).__init__()
         self.DISPLAY = DISPLAY
         self.process(zed.getImage())
         vesc.setDriveMsg(self.driveMsg)
         vesc.publish()
+    """
+
+
+    def __init__(self):
+        super(LineFollow, self).__init__()
+
+
+    def run(self, zed, vesc, DISPLAY):
+        self.DISPLAY = DISPLAY
+        self.driveMsg = vesc.getDriveMsg() # Get AckermannDrive
+        self.process(zed.getImage()) # Processes the the data
+        vesc.setDriveMsg(self.driveMsg) # Set AckermannDrive
+        vesc.publish() # Publish to vesc
 
 
     # I need to seperate the processing done in Camera (and the zed file in general).
     def process(self, image):
-        left = self.camera(image[0:256, 0:672], 'left')
-        right = self.camera(image[0:256, 672:1344], 'right')
+        left = self.side(image[0:256, 0:672], 'left')
+        right = self.side(image[0:256, 672:1344], 'right')
         linesExist = left.getLinesExist() or right.getLinesExist()
         firstLinesSeen = left.getFirstLinesSeen() and right.getFirstLinesSeen()
         return self.control(left.getSlope(), right.getSlope(), linesExist, firstLinesSeen)
 
 
-    def camera(self, image, side):
+    def side(self, image, side):
         line = Line(image)
         if self.DISPLAY:
             cv2.imshow(side + ' Camera', line.draw())

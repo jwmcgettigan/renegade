@@ -14,17 +14,20 @@ from joy import Joy
 from linefollow import LineFollow
 from polebending import Polebending
 from parallel import Parallel
-from roundabout import Roundabout
+from orbit import Orbit
 from serpentine import Serpentine
+from parking import Parking
+from avoiding import Avoiding
 
 VERBOSE=False
 DEBUG=False
 RECORD=False
 
 class Car:
-    mode = [0, 0, 0, 0] # lineFollow, laneCenter, serpentine
+    mode = [0, 0, 0, 0], [0] # lineFollow, laneCenter, serpentine
     DISPLAY = False
     displayList = []
+    serpentineValues = ["", False, -1, -2]
 
     def __init__(self):
         """Initialize the components of the car."""
@@ -38,6 +41,15 @@ class Car:
         rp.Subscriber("zed/normal", Image, self.zed_callback)
         rp.Subscriber("scan", LaserScan, self.lidar_callback)
 
+        self.serpentine = Serpentine("", False, -1, -2)
+        self.lineFollow = LineFollow()
+
+        self.laneCenter = LaneCenter()
+        self.orbit = Orbit()
+        self.parallel = Parallel()
+        self.roundabout = Roundabout()
+
+        #self.serpentine = Serpentine(self.vesc)
         """
         lineFollow = LineFollow(vesc)
         laneCenter = LaneCenter(vesc)
@@ -47,33 +59,75 @@ class Car:
 
 
     def controller(self, zed, lidar, vesc):
-        joyData = self.joy.getData()
-        #Serpentine(zed, lidar, vesc, self.DISPLAY)
-        if joyData.buttons[5]: # Autonomous Mode
-            if   joyData.buttons[0]: self.mode = [1, 0, 0, 0] # X
-            elif joyData.buttons[1]: self.mode = [0, 1, 0, 0] # A
-            elif joyData.buttons[2]: self.mode = [0, 0, 1, 0] # B
-            elif joyData.buttons[3]: self.mode = [0, 0, 0, 1] # Y
-            elif joyData.buttons[8]: self.mode = [0, 0, 0, 0] # BACK
+        joyButtons = self.joy.getData().buttons
+        #self.serpentine.run(zed, lidar, self.DISPLAY)
+        #Serpentine(zed, lidar, vesc, self.DISPLAY, self.distanceOffsetction)
+        self.setMode(joyButtons)
+        if joyButtons[5]: # Autonomous Mode
+            self.runMode(zed, lidar, vesc)
+        else:
+            self.serpentine.resetValues()
 
-            if joyData.buttons[9]: # START
+        """
+        if joyButtons[5]: # Autonomous Mode
+
+            #
+            if self.mode[1][0]: # START
+                self.DISPLAY = True
+            else:
+                cv2.destroyAllWindows()
+                self.DISPLAY = False
+                """
+                """
                 self.displayList.append(1)
                 if len(self.displayList) > 3:
                     cv2.destroyAllWindows()
                     self.DISPLAY = not self.DISPLAY
                     self.displayList = []
-
-
-            if self.mode[0]:
-                LineFollow(zed, vesc, self.DISPLAY)
-            elif self.mode[1]:
+                """
+            """
+            if self.mode[0][0]: # X
+                #LineFollow(zed, vesc, self.DISPLAY)
+                Avoiding(zed, lidar, vesc, self.DISPLAY)
+            elif self.mode[0][1]: # A
+                Parking(zed, lidar, vesc, self.DISPLAY)
                 #LaneCenter(lidar, vesc)
                 pass
-            elif self.mode[2]:
+            elif self.mode[0][2]: # B
                 #Polebending(zed, vesc)
                 #Parallel(zed, lidar, vesc)
-                Serpentine(zed, lidar, vesc, self.DISPLAY)
+                serpentine = Serpentine(zed, lidar, vesc, self.DISPLAY, self.serpentineValues)
+                self.serpentineValues[0] = serpentine.getLastDirection()
+                self.serpentineValues[1] = serpentine.getLastOrbit()
+                self.serpentineValues[2] = serpentine.getCount()
+                self.serpentineValues[3] = serpentine.getNumberOfCones()
+                # self.serpentine.run(zed, lidar, self.DISPLAY)
                 #Roundabout(zed, lidar, vesc)
+            elif self.mode[0][3]: # Y
+                Parallel(zed, lidar, vesc, self.DISPLAY)
+        else:
+            self.serpentineValues = ["", False, -1, -2]
+        """
+
+
+    def setMode(self, buttons):
+        if   buttons[0]: self.mode[0] = [1, 0, 0, 0] # X      |
+        elif buttons[1]: self.mode[0] = [0, 1, 0, 0] # A      |
+        elif buttons[2]: self.mode[0] = [0, 0, 1, 0] # B      |
+        elif buttons[3]: self.mode[0] = [0, 0, 0, 1] # Y      |
+        elif buttons[9]: self.mode[1] = [1]          # START  | ENABLE DISPLAY MODE (Independent from other modes)
+        elif buttons[8]: self.mode = [0, 0, 0, 0], [0] # BACK | TURNS OFF ALL MODES
+
+
+    def runMode(self, zed, lidar, vesc):
+        if self.mode[0][0]: # X
+            self.lineFollow.run(zed, vesc, DISPLAY)
+        elif self.mode[0][1]: # A
+            pass
+        elif self.mode[0][2]: # B
+            self.serpentine.run(zed, lidar, vesc, self.DISPLAY)
+        elif self.mode[0][3]: # Y
+            pass
 
 
     def joy_callback(self, data):

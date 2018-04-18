@@ -2,10 +2,9 @@
 # ----------------
 #
 
-from object import Object
+from item import Item
 import cv2, numpy as np
 
-class Wall(Object):
+class Wall(Item):
 
-    def __init__(self, image):
-        pass
+    def __init__(self, angle):

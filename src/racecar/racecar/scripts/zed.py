@@ -64,7 +64,8 @@ class Publisher:
         left = 0
         right = width"""
         #imgCrop = img[top:bottom, left:right]
-        imgCrop = img[0:376,0:1344]
+        #imgCrop = img[0:376,0:1344]
+        imgCrop = cv2.resize(img, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_AREA)
         self.zedNormal.publish(self.bridge.cv2_to_imgmsg(imgCrop, encoding="passthrough"))
 
 

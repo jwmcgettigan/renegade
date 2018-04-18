@@ -2,104 +2,34 @@
 # ----------------
 #
 
-from polebending import Polebending
-from cone import Cone
-from cube import Cube
-import cv2, numpy as np, math
+from mode import Mode
 
-DEBUG=False
-VERBOSE=True
-VISUAL=False
+class Orbit(Mode):
 
-class Serpentine(Polebending):
-
-    """
-    def __init__(self, zed, lidar, vesc, DISPLAY, serpentineValues):
-        super(Serpentine, self).__init__(vesc)
-        self.lastDirection = serpentineValues[0]
-        self.lastOrbit = serpentineValues[1]
-        self.count = serpentineValues[2]
-        self.numberOfCones = serpentineValues[3]
+    def __init__(self, zed, lidar, vesc, DISPLAY):
+        super(Orbit, self).__init__(vesc)
         self.vesc = vesc
         self.DISPLAY = DISPLAY
-        # self.process(zed.getImage(), lidar.getData()) # do I need to copy the image?
         self.data = lidar.getData()
         self.process(zed.getImage())
         vesc.setDriveMsg(self.driveMsg)
         vesc.publish()
 
 
-    def run(self, zed, lidar, DISPLAY):
-        self.DISPLAY = DISPLAY
-        self.data = lidar.getData()
-        self.process(zed.getImage())
-        self.vesc.setDriveMsg(self.driveMsg)
-        self.vesc.publish()
-    """
-
-    def __init__(self, lastDirection, lastOrbit, count, numberOfCones):
-        super(Serpentine, self).__init__()
-        self.lastDirection = lastDirection
-        self.lastOrbit = lastOrbit
-        self.count = count
-        self.numberOfCones = numberOfCones
-
-
-    def run(self, zed, lidar, vesc, DISPLAY):
-        self.DISPLAY = DISPLAY
-        self.data = lidar.getData() # Get lidar data
-        self.driveMsg = vesc.getDriveMsg() # Get AckermannDrive
-        self.process(zed.getImage()) # Processes the the data
-        self.vesc.setDriveMsg(self.driveMsg) # Set AckermannDrive
-        self.vesc.publish() # Publish to vesc
-
-
-    def getLastDirection(self):
-        return self.lastDirection
-
-
-    def getLastOrbit(self):
-        return self.lastOrbit
-
-
-    def getCount(self):
-        return self.count
-
-
-    def getNumberOfCones(self):
-        return self.numberOfCones
-
-
-    def resetValues(self):
-        self.lastDirection = ""
-        self.lastOrbit = False
-        self.count = -1
-        self.numberOfCones = -2
-
-
     def process(self, image):
-        height, width = image.shape[:2]
-        left = self.side(image[:height, :width/2], (540, 1055), 'left')
-        right = self.side(image[:height, width/2:width], (25, 540), 'right')
+        left = self.side(image[0:256, 0:672], (540, 1055), 'left')
+        right = self.side(image[0:256, 672:1344], (25, 540), 'right')
         return self.control(left, right)
 
 
     def side(self, image, ranges, label):
-        height, width = image.shape[:2]
         cone = self.detectCone(image, ranges)
-        cube = self.detectCube(image, ranges)
-        if cone.getCenter()[1] < cube.getCenter()[1]:
-            if self.DISPLAY:
-                cv2.imshow(label + ' Camera', cube.draw())
-                #cv2.imshow(label + ' Camera', np.hstack([cone.draw(), cube.draw()]))
-                cv2.waitKey(1)
-            return cube
-        else:
-            if self.DISPLAY:
-                cv2.imshow(label + ' Camera', cone.draw())
-                #cv2.imshow(label + ' Camera', np.hstack([cone.draw(), cube.draw()]))
-                cv2.waitKey(1)
-            return cone
+        #cube = self.detectCube(image, ranges)
+        if self.DISPLAY:
+            cv2.imshow(label + ' Camera', cone.draw())
+            #cv2.imshow(label + ' Camera', np.hstack([cone.draw(), cube.draw()]))
+            cv2.waitKey(1)
+        return cone
 
 
     def detectCone(self, image, ranges):
@@ -117,7 +47,7 @@ class Serpentine(Polebending):
 
 
     def control(self, left, right):
-        perpendicularDistance = adjacentDistance = distance = angle = error = 0
+        perpendicularDistance = distance = angle = error = 0
         angleOffset = distanceOffset = perpendicularOffset = 0
         height, width = left.getImage().shape[:2]
         lCenter, rCenter = left.getCenter(), right.getCenter()
@@ -135,18 +65,9 @@ class Serpentine(Polebending):
         desiredDistance, desiredAngle, desiredPerpendicular = 0.3, 0, 0.3
         triggerAngle, direction = 80, ""
         """
-        distanceConstant, angleConstant, perpendicularConstant, adjacentConstant = 1, 0.3/131, 1.0/2, 1.0/2
-        desiredDistance, desiredAngle, desiredPerpendicular = 0.3, 0, 0.3
-        triggerAngle, direction = 80, ""
-
-        print "Count: " + str(self.count)
-        print "NumCones: " + str(self.numberOfCones)
-        print "IsCube: " + str(left.getIsCube() and right.getIsCube())
-        if left.getIsCube() and right.getIsCube() or self.count == self.numberOfCones:
-            if VERBOSE: print "TREATING IT LIKE A CUBE"
-            desiredDistance, desiredAngle, desiredPerpendicular = 0.3, 0, 1.0
-            self.numberOfCones = self.count
-            self.count = 0
+        distanceConstant, angleConstant, perpendicularConstant = 1, 0.3/131, 1.0/2
+        desiredDistance, desiredAngle, desiredPerpendicular = 0.3, 0, 1.0
+        triggerAngle, direction = 70, ""
 
         perpendicular, orbit = True, False
         useLeft, useRight = False, False
@@ -198,9 +119,7 @@ class Serpentine(Polebending):
 
 
         if useLeft: # LEFT
-            if VERBOSE: print "YOU ARE USING THE LEFT SIDE"
             distance, angle = lDistance, lAngle
-            adjacentDistance = self.adjacentLineDistance(angle, distance)
             perpendicularDistance = self.perpendicularLineDistance(angle, distance)
             perpendicularOffset = perpendicularConstant*(perpendicularDistance - desiredPerpendicular)
             distanceOffset = distanceConstant*(distance - desiredDistance)
@@ -213,16 +132,11 @@ class Serpentine(Polebending):
 
             if perpendicular:
                 if VERBOSE: print "YOU ARE PERPENDICULAR TO THE LEFT"
-                if VERBOSE: print "distance, angle: %.2f, %.2f" % (distance, angle)
                 error = perpendicularOffset
             elif orbit: error = 0.3#(1 * angleOffset) + (0 * distanceOffset)
-            #if distance < 0.3:
-                #error -= distance
             direction = "Left"
-        elif useRight: # RIGHT
-            if VERBOSE: print "YOU ARE USING THE RIGHT SIDE"
+        elif useRight:                 # RIGHT
             distance, angle = rDistance, rAngle
-            adjacentDistance = self.adjacentLineDistance(angle, distance)
             perpendicularDistance = self.perpendicularLineDistance(angle, distance)
             perpendicularOffset = perpendicularConstant*(desiredPerpendicular - perpendicularDistance)
             distanceOffset = distanceConstant*(desiredDistance - distance)
@@ -235,15 +149,9 @@ class Serpentine(Polebending):
 
             if perpendicular:
                 if VERBOSE: print "YOU ARE PERPENDICULAR TO THE RIGHT"
-                if VERBOSE: print "distance, angle: %.2f, %.2f" % (distance, angle)
                 error = perpendicularOffset
             elif orbit: error = -0.3#(1 * angleOffset) + (0 * distanceOffset)
-            #if distance < 0.3:
-                #error += distance
             direction = "Right"
-        if self.lastDirection is not direction:
-            self.count += 1
-            #print self.count
         self.lastDirection = direction
         self.lastOrbit = orbit
 
@@ -263,7 +171,6 @@ class Serpentine(Polebending):
         steeringAngle = error
         if steeringAngle > 0.3: steeringAngle = 0.3
         if steeringAngle < -0.3: steeringAngle = -0.3
-        print "Steering Angle: " + str(steeringAngle)
         """
         if steeringAngle > 0.02: direction = "Left"
         elif steeringAngle < -0.02: direction = "Right"
@@ -273,8 +180,7 @@ class Serpentine(Polebending):
         #speedPower = 1.13678
         #speed = speedLimit * (1 - abs(steeringAngle))**speedPower
         speed = 1
-        #speed = adjacentDistance * error
-        if error >= 0.2:
+        if error >= 0.3:
             speed = 0.5
         if DEBUG:
             print "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
@@ -291,24 +197,6 @@ class Serpentine(Polebending):
             print "%s |  %d  | %s | %s" % ((center,), width, coneSeen, self.lastOrbit)
             print "\nDistance | Angle | Direction | Last Direction " #add real direction in
             print "%.2f     | %.2f  |   %s   | %s" % (distance, angle, direction, self.lastDirection)
-
-        if VISUAL:
-            print "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-            print "Perpendicular: " + str(perpendicular)
-            print "Orbit: " + str(orbit)
-
-            """
-            if direction == "Left":
-                print " _____ "
-                print "|\\"
-                print "| \\"
-                print "   \\"
-            if direction == "Right":
-                print "  ____ "
-                print "     /|"
-                print "    / |"
-                print "   /   "
-            """
 
         return self.decide(speed, steeringAngle)
 
@@ -341,14 +229,6 @@ class Serpentine(Polebending):
         for x in range(ranges[1], 1081): tempRanges.append(65)
         # return min(tempRanges), tempRanges.index(min(tempRanges))
         minimum = min(tempRanges)
-        #print tempRanges
-        #print "minimum: " + str(minimum) + "," + str(tempRanges.index(minimum)) + "," + str(self.toAngle(tempRanges.index(minimum)))
-        #tempRanges.sort()
-        #print "==========="
-        #for x in range(0, 10): print self.toAngle(self.data.ranges.index(tempRanges[x]))
-        #print tempRanges
-        #print "==========="
-
         return minimum, self.toAngle(tempRanges.index(minimum))
 
 
@@ -362,8 +242,8 @@ class Serpentine(Polebending):
 
 
     def perpendicularLineDistance(self, angle, hypotenuse):
-        return abs(hypotenuse*math.sin(angle*0.0174533))
-
-
-    def adjacentLineDistance(self, angle, hypotenuse):
-        return abs(hypotenuse*math.cos(angle*0.0174533))
+        #hypotenuse = self.data.ranges[self.fromAngle(angle)]
+        adjacentDistance = abs(hypotenuse*math.sin(angle*0.0174533))
+        # print str(angle) + "\t" + str(self.data.ranges[self.convertAngle(angle)]) + "\t" + str(abs(self.data.ranges[self.convertAngle(angle)]*math.sin(angle)))
+        #print str(angle) + "\t" + str(hypotenuse) + "\t" + str(adjacentDistance)
+        return adjacentDistance

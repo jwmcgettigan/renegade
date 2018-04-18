@@ -7,12 +7,11 @@ from cone import Cone
 import cv2, numpy as np, math
 
 DEBUG=False
-VERBOSE=False
 
-class Parallel(Mode):
+class Avoiding(Mode):
 
     def __init__(self, zed, lidar, vesc, DISPLAY):
-        super(Parallel, self).__init__(vesc)
+        super(Avoiding, self).__init__(vesc)
         self.vesc = vesc
         self.DISPLAY = DISPLAY
         self.data = lidar.getData()
@@ -22,8 +21,10 @@ class Parallel(Mode):
 
 
     def process(self, image):
-        left = self.side(image[0:256, 0:672], (540, 1055), 'left')
-        right = self.side(image[0:256, 672:1344], (25, 540), 'right')
+        height, width = image.shape[:2]
+        left = self.side(image[0:height, 0:width/2], (540, 1055), 'left')
+        right = self.side(image[0:height, width/2:width], (25, 540), 'right')
+        #self.depthSensing(left, right)
         return self.control(left, right)
 
 
@@ -42,17 +43,8 @@ class Parallel(Mode):
         return Cone(self.imageAnalysis(image, yellow), image, distance, angle)
 
 
-    def detectCube(self, image, ranges):
-        """Detects the closest cube"""
-        distance, angle = self.rangeAnalysis(ranges)
-        orange = self.color[3]
-        return Cube(self.imageAnalysis(image, orange), image, distance, angle)
-
-
     def control(self, left, right):
         stop = False
-        perpendicularDistance = distance = angle = error = 0
-        angleOffset = distanceOffset = perpendicularOffset = 0
         height, width = left.getImage().shape[:2]
         lCenter, rCenter = left.getCenter(), right.getCenter()
         center = (lCenter[0] + rCenter[0]) / 2, (lCenter[1] + rCenter[1]) / 2
@@ -60,41 +52,9 @@ class Parallel(Mode):
         if rCenter[0] == 0: center = lCenter
         coneSeen = center[0] > 0
 
-        if not coneSeen:
-            stop = True
-
-        lDistance, rDistance = left.getDistance(), right.getDistance()
-        lAngle, rAngle = left.getAngle(), right.getAngle()
-
-        perpendicularConstant = 1/2.0
-        desiredPerpendicular = 0.3
-        triggerAngle, direction = 70, ""
-        useLeft, useRight = False, False
-
-        if coneSeen and center[0] <= width/2:
-            if VERBOSE: print "THE CONE IS ON THE LEFT"
-            useLeft, useRight = True, False
-        elif center[0] > width/2:
-            if VERBOSE: print "THE CONE IS ON THE RIGHT"
-            useLeft, useRight = False, True
-        else:
-            print "No cone has been seen."
-
-
-        if useLeft: # LEFT
-            distance, angle = lDistance, lAngle
-            perpendicularDistance = self.perpendicularLineDistance(angle, distance)
-            perpendicularOffset = perpendicularConstant*(perpendicularDistance - desiredPerpendicular)
-            error = perpendicularOffset
-            direction = "Left"
-        elif useRight: # RIGHT
-            distance, angle = rDistance, rAngle
-            perpendicularDistance = self.perpendicularLineDistance(angle, distance)
-            perpendicularOffset = perpendicularConstant*(desiredPerpendicular - perpendicularDistance)
-            error = perpendicularOffset
-            direction = "Right"
-
-        print error
+        if center[1] > height/4:
+            error = (center[0] - (width/2))*(2/336.0)
+        error = -(center[0] - (width/2))*(2/336.0)
         steeringAngle = error
         if steeringAngle > 0.3: steeringAngle = 0.3
         if steeringAngle < -0.3: steeringAngle = -0.3
@@ -137,10 +97,14 @@ class Parallel(Mode):
     def toAngle(self, index):
         return -(index-1081)*(float(270)/1081) - 135
 
-
-    def perpendicularLineDistance(self, angle, hypotenuse):
-        #hypotenuse = self.data.ranges[self.fromAngle(angle)]
-        adjacentDistance = abs(hypotenuse*math.sin(angle*0.0174533))
-        # print str(angle) + "\t" + str(self.data.ranges[self.convertAngle(angle)]) + "\t" + str(abs(self.data.ranges[self.convertAngle(angle)]*math.sin(angle)))
-        #print str(angle) + "\t" + str(hypotenuse) + "\t" + str(adjacentDistance)
-        return adjacentDistance
+    def depthSensing(self, left, right):
+        #D=B/(math.atan(2*x*math.tan(FOV/2)/width))+math.atan(2*x*math.tan(FOV/2)/width)))
+        #D=B*width/(2*math.tan(FOV/2)(xL-xR))
+        B = 0.12 #Distance between ZED lenses
+        FOV = math.radians(110) #Degree of view
+        height, width = left.getImage().shape[:2]
+        lX, lY = left.getCenter()
+        rX, rY = right.getCenter()
+        d = B/(math.atan(2*lX*math.tan(math.radians(FOV/2))/width))+(math.atan(2*rX*math.tan(math.radians(FOV/2))/width))
+        D = B*width/(2*math.tan(math.radians(FOV/2))*(lX-rX))
+        print "Longer distance forumla: \t" + str(d) + "\nShorter distance formula:\t" + str(D)
