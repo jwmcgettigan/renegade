@@ -1,3 +1,4 @@
 #!/bin/bash
-
-python ~/racecar-ws/src/racecar/racecar/scripts/new/run.py
+./screen/teleop.sh
+./screen/zed.sh
+./car.sh

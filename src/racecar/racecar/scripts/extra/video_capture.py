@@ -5,17 +5,17 @@ cap = cv2.VideoCapture(1)
 
 # Define the codec and create VideoWriter object
 # fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-out = cv2.VideoWriter('output.avi',('MJPG'), 30.0, (1344,376))
+out = cv2.VideoWriter('output.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 30, (int(1344), int(376)))
 
 while(cap.isOpened()):
     ret, frame = cap.read()
     if ret==True:
-        frame = cv2.flip(frame,0)
+        #frame = cv2.flip(frame,0)
 
         # write the flipped frame
         out.write(frame)
 
-        cv2.imshow('frame',frame)
+        #cv2.imshow('frame',frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     else:
